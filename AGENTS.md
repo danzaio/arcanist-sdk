@@ -525,8 +525,22 @@ ui.text("estado: " .. tostring(S.get("estado") or "-"))
 ### 6.5 Esconder a UI do bot (entrega pro usuário final)
 
 ```lua
-ui.hide_host(true)   -- o usuário final só vê a TUA janela
+-- (a) num controle do TEU painel (o usuário liga/desliga quando quiser):
+ui.hide_host(true)
+
+-- (b) JÁ NO CARREGAMENTO do pack (o usuário nunca vê a UI do bot):
+if HOST_STATE == "ui" then
+  ui.hide_host(true)
+end
 ```
+
+**IMPORTANTE:** se você esconder a UI do bot, o **TEU painel precisa ter como trazer de volta**
+(um checkbox "mostrar UI do bot" que chama `ui.hide_host(false)`) — senão o usuário fica sem
+como chegar nas abas do bot. O `demo_ui` faz exatamente isso (checkbox + fica salvo).
+
+**Dica de layout:** o painel do pack é uma janela ImGui normal — clique nela pra trazer pra
+frente e arraste pela barra de título. Se ela ficar "disputando" com a janela do bot, é só
+esconder o host (acima): sobra só a tua janela na tela.
 
 ### 6.6 Packs prontos (já vêm na pasta `scripts\` do pacote)
 
