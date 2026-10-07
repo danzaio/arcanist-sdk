@@ -382,7 +382,7 @@ footer {
         <span>Prática</span>
         <a href="#receitas">Receitas</a>
         <a href="#erros">Erros e diagnóstico</a>
-        <a href="#exemplos">Exemplos prontos</a>
+        <a href="#exemplos">Exemplos e packs</a>
         <a href="#estado-sdk">O que já está pronto</a>
       </div>
     </nav>
@@ -995,8 +995,9 @@ footer {
     <!-- ============ EXEMPLOS ================= -->
     <section id="exemplos" aria-labelledby="h-exemplos">
       <header>
-        <h2 id="h-exemplos">Exemplos prontos</h2>
-        <p>Todos em <code>scripts/</code>. Copie a pasta, mude, clique <strong>Carregar</strong>.</p>
+        <h2 id="h-exemplos">Exemplos e packs prontos</h2>
+        <p>Todos em <code>scripts/</code> no pacote. Copie a pasta, mude, clique
+           <strong>Carregar</strong>. Os packs prontos estão com o código completo logo abaixo.</p>
       </header>
 
       <div class="grid cols-2">
@@ -1006,6 +1007,12 @@ footer {
              gerado do catálogo</strong>, seletor de tema, esconder a UI do host, alertas e uma
              coroutine de feature.</p>
           <p class="hint">Comece por ele.</p>
+        </div>
+        <div class="card">
+          <h4>🎁 <code>heal/</code> · <code>hud/</code> · <code>autoloot/</code> · <code>radar/</code></h4>
+          <p>Quatro packs prontos de feature: cura automática, painel de stats, auto-loot e radar
+             de monstros. Código completo logo abaixo — clique <strong>Carregar</strong> neles no
+             bot pra ver funcionando.</p>
         </div>
         <div class="card">
           <h4><code>examples/01..05</code></h4>
@@ -1022,7 +1029,230 @@ footer {
           <p>Pack de verificação: executa a cadeia inteira sozinho e loga cada resultado. Use para
           validar uma instalação nova.</p>
         </div>
+        <div class="card">
+          <h4>📄 Manual completo — <code>AGENTS.md</code></h4>
+          <p>O manual inteiro do SDK: API completa, regras, armadilhas, receitas e todos os packs.
+             É o arquivo que você entrega para a sua IA ler antes de programar.</p>
+          <p><a class="btn" href="https://github.com/danzaio/arcanist-sdk/blob/main/AGENTS.md">Ler o manual</a>
+             <a class="btn" href="AGENTS.md">Baixar o arquivo</a></p>
+        </div>
       </div>
+
+      <h3>Packs prontos — código completo</h3>
+      <p>Copie daqui (botão <em>copiar</em> em cada bloco) ou use direto do pacote, em
+         <code>scripts/nome-do-pack/main.lua</code>. Tudo que eles usam está na
+         <a href="#leitura">referência</a> acima.</p>
+
+      <h4><code>heal/main.lua</code> — cura automática (magia e % salvos)</h4>
+      <div class="code"><pre><code>local E  = require("sdk.engine")
+local L  = require("sdk.localplayer")
+local ST = require("sdk.storage")
+local S  = require("sdk.shared")
+local ui = game.overlay
+
+local cfg = {
+  ligado = (ST.get("ligado") == true),
+  spell  = ST.get("spell") or "exura",
+  hp_min = tonumber(ST.get("hp_min")) or 60,
+}
+
+-- FEATURE (estado logic). Le os toggles do ST a cada volta: o que o usuario
+-- mexe na janela chega aqui na hora (as variaveis de cada estado NAO se cruzam).
+spawn(function()
+  while true do
+    wait(300)
+    if ST.get("ligado") == true then
+      local lp = E.localplayer()
+      local limiar = tonumber(ST.get("hp_min")) or 60
+      if lp and lp.hp_pct < limiar then
+        local spell = ST.get("spell") or "exura"
+        local ok, err = L.say(spell)
+        if ok then
+          S.set("ultima_cura", lp.hp_pct .. "% com " .. spell)
+        else
+          S.set("ultimo_erro", tostring(err))
+        end
+      end
+    end
+  end
+end)
+
+-- UI (estado ui)
+function ui.frame()
+  ui.window("Heal", function()
+    local lp = E.localplayer()
+    if lp then
+      ui.text(("HP %d%%   Mana %d%%"):format(lp.hp_pct, lp.mana_pct))
+      ui.progress(lp.hp_pct)
+    else
+      ui.text("sem personagem")
+    end
+
+    ui.separator()
+
+    local v = ui.checkbox("Cura automatica", cfg.ligado)
+    if v ~= cfg.ligado then
+      cfg.ligado = v
+      ST.set("ligado", v)
+      game.alert(v and "Heal LIGADO" or "Heal desligado")
+    end
+
+    local pct = ui.slider("Curar abaixo de (%)", cfg.hp_min, 10, 95)
+    if pct ~= cfg.hp_min then
+      cfg.hp_min = pct
+      ST.set("hp_min", pct)
+    end
+
+    local sp = ui.input("Magia", cfg.spell)
+    if sp ~= cfg.spell then
+      cfg.spell = sp
+      ST.set("spell", sp)
+    end
+
+    local ult = S.get("ultima_cura")
+    if ult then ui.color_text(0.4, 1.0, 0.4, "ultima cura: " .. tostring(ult)) end
+    local err = S.get("ultimo_erro")
+    if err then ui.color_text(1.0, 0.6, 0.3, "ultimo erro: " .. tostring(err)) end
+  end)
+end</code></pre></div>
+
+      <h4><code>hud/main.lua</code> — painel de stats</h4>
+      <div class="code"><pre><code>local E  = require("sdk.engine")
+local ST = require("sdk.storage")
+local ui = game.overlay
+
+-- conta quantas vezes o bot carregou este pack (fica salvo no disco)
+if HOST_STATE == "logic" then
+  ST.set("sessoes", (tonumber(ST.get("sessoes")) or 0) + 1)
+end
+
+function ui.frame()
+  ui.window("HUD", function()
+    local lp = E.localplayer()
+    if not lp then
+      ui.text("sem personagem (loga no jogo)")
+      return
+    end
+
+    ui.text(("%s  -  nivel %d"):format(lp.name, lp.level))
+    ui.text(("Pos: %d, %d, %d"):format(lp.x, lp.y, lp.z))
+    ui.separator()
+
+    ui.text(("HP %d%%"):format(lp.hp_pct))
+    ui.progress(lp.hp_pct)
+    ui.text(("Mana %d%%"):format(lp.mana_pct))
+    ui.progress(lp.mana_pct)
+    ui.separator()
+
+    ui.text("Cap: " .. lp.cap .. "   |   XP: " .. lp.xp)
+    ui.text("Stamina: " .. lp.stamina)
+
+    local estados = {}
+    if lp.poisoned then estados[#estados + 1] = "ENVENENADO" end
+    if lp.paralyzed then estados[#estados + 1] = "PARALISADO" end
+    if lp.hasted then estados[#estados + 1] = "haste" end
+    if lp.manashielded then estados[#estados + 1] = "manashield" end
+    if lp.in_pz then estados[#estados + 1] = "PZ" end
+    if lp.drunk then estados[#estados + 1] = "bebado" end
+    if #estados > 0 then
+      ui.color_text(1.0, 0.75, 0.2, table.concat(estados, "  |  "))
+    else
+      ui.text("sem condicoes ativas")
+    end
+
+    ui.separator()
+    ui.text("sessoes (salvo): " .. tostring(ST.get("sessoes") or "?"))
+  end)
+end</code></pre></div>
+
+      <h4><code>autoloot/main.lua</code> — auto-loot com botões</h4>
+      <div class="code"><pre><code>local T  = require("sdk.tools")
+local ST = require("sdk.storage")
+local S  = require("sdk.shared")
+local ui = game.overlay
+
+local cfg = {
+  ligado    = (ST.get("ligado") == true),
+  intervalo = tonumber(ST.get("intervalo")) or 1500,
+}
+
+-- FEATURE (estado logic). Le do ST a cada volta (toggle da UI chega na hora).
+spawn(function()
+  while true do
+    wait(tonumber(ST.get("intervalo")) or 1500)
+    if ST.get("ligado") == true then
+      local ok, err = T.quickloot()
+      if ok then
+        S.set("loots", (tonumber(S.get("loots")) or 0) + 1)
+      else
+        S.set("ultimo_erro", tostring(err))
+      end
+    end
+  end
+end)
+
+-- UI (estado ui)
+function ui.frame()
+  ui.window("Auto-loot", function()
+    local v = ui.checkbox("Lootar automaticamente", cfg.ligado)
+    if v ~= cfg.ligado then
+      cfg.ligado = v
+      ST.set("ligado", v)
+      game.alert(v and "Auto-loot LIGADO" or "Auto-loot desligado")
+    end
+
+    local ms = ui.slider("A cada (ms)", cfg.intervalo, 500, 5000)
+    if ms ~= cfg.intervalo then
+      cfg.intervalo = ms
+      ST.set("intervalo", ms)
+    end
+
+    ui.separator()
+
+    if ui.button("Lootar agora") then
+      local ok, err = T.quickloot()
+      game.alert(ok and "Loot ok" or ("Falhou: " .. tostring(err)))
+    end
+
+    ui.text("loots nesta sessao: " .. tostring(S.get("loots") or 0))
+    local err = S.get("ultimo_erro")
+    if err then ui.color_text(1.0, 0.6, 0.3, "ultimo erro: " .. tostring(err)) end
+  end)
+end</code></pre></div>
+
+      <h4><code>radar/main.lua</code> — monstros por perto + atacar</h4>
+      <div class="code"><pre><code>local E  = require("sdk.engine")
+local L  = require("sdk.localplayer")
+local ui = game.overlay
+
+function ui.frame()
+  ui.window("Radar", function()
+    local perto = {}
+    for _, c in ipairs(E.creatures()) do
+      if c.is_monster then perto[#perto + 1] = c end
+    end
+    table.sort(perto, function(a, b) return a.dist < b.dist end)
+
+    ui.text(#perto .. " monstro(s) por perto")
+    ui.separator()
+
+    if #perto == 0 then
+      ui.text("nenhum monstro na tela")
+      return
+    end
+
+    for i = 1, math.min(#perto, 8) do
+      local c = perto[i]
+      ui.text(("%s  (%d tiles, %d%% hp)"):format(c.name, c.dist, c.hp_pct))
+      ui.same_line()
+      -- o clique enfileira a acao (a UI nunca despacha na hora); erro real vai pro log
+      if ui.button("Atacar##m" .. c.id) then
+        local ok, err = L.attack(c.id)
+        game.alert(ok and ("Atacando " .. c.name) or ("Falhou: " .. tostring(err)))
+      end
+    end
+  end)
+end</code></pre></div>
     </section>
 
     <!-- ============ ESTADO DO SDK ================= -->
