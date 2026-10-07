@@ -831,6 +831,22 @@ footer {
         <code>collapsing</code>, <code>child</code>) <strong>sempre fecham</strong>, mesmo se o
         corpo der erro: o layout não corrompe.</p>
       </div>
+
+      <div class="note ok">
+        <p><strong>Esconder a UI do bot:</strong> <code>ui.hide_host(true)</code> esconde
+        <strong>só a janela do bot</strong> — os painéis do pack continuam desenhando (e ficam por
+        cima). Dá pra esconder já no carregamento do pack, e o teu painel precisa ter um controle
+        pra voltar:</p>
+      </div>
+      <div class="code"><pre><code><span class="c-cm">-- no carregamento do pack (estado ui): o usuário final só vê a TUA janela</span>
+<span class="c-kw">if</span> HOST_STATE == <span class="c-st">"ui"</span> <span class="c-kw">then</span>
+  ui.<span class="c-fn">hide_host</span>(<span class="c-kw">true</span>)
+<span class="c-kw">end</span>
+
+<span class="c-cm">-- e um caminho de volta no TEU painel:</span>
+<span class="c-kw">if</span> ui.<span class="c-fn">button</span>(<span class="c-st">"mostrar UI do bot"</span>) <span class="c-kw">then</span>
+  ui.<span class="c-fn">hide_host</span>(<span class="c-kw">false</span>)
+<span class="c-kw">end</span></code></pre></div>
     </section>
 
     <!-- ============ TEMAS ================= -->
@@ -1274,7 +1290,8 @@ end</code></pre></div>
             <li>Coroutines com <code>wait</code></li>
             <li>Config persistente por pack</li>
             <li>UI completa + 4 temas + toast</li>
-            <li>Esconder a UI de debug do host</li>
+            <li>Esconder a UI do bot (o painel do pack continua)</li>
+            <li>Janela sempre na frente do jogo (topmost)</li>
           </ul>
         </div>
         <div class="card">
@@ -1293,6 +1310,7 @@ end</code></pre></div>
             <li>Suíte headless (host, ações, UI, storage) — 100% verde</li>
             <li>Teste ao vivo com personagem: leitura, andar multi-tile, evento, ataque, loot</li>
             <li>Persistência provada entre restarts</li>
+            <li>07/10: dispatch seguro, <code>hide_host</code> e janela topmost verificados ao vivo</li>
           </ul>
         </div>
       </div>
