@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SDK Lua do Arcanist — Referência</title>
+<meta name="description" content="Referência do SDK Lua do Arcanist: leitura, ações, eventos, coroutines, UI/UX e packs. Verificado ao vivo.">
+<style>
+/* ==========================================================================
+   DESIGN TOKENS
+   ========================================================================== */
+:root {
+  /* Paleta Moonlight (o tema default do SDK) */
+  --bg:            #14161a;
+  --bg-panel:      #181a1e;
+  --bg-raise:      #1d2026;
+  --bg-sunken:     #0c0e12;
+  --border:        #282b31;
+  --border-strong: #343943;
+  --text:          #ffffff;
+  --text-soft:     #c3c9d6;
+  --text-dim:      #8b93a7;
+  --text-faint:    #5b6480;
+  --accent:        #f8ff7f;
+  --accent-ink:    #1a1c10;
+  --accent-2:      #ffcb7f;
+  --cyan:          #08f2d7;
+  --danger:        #ff7a7a;
+  --ok:            #7bffb0;
+
+  /* Tipografia — escala 1.25 */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --fs-0: .75rem;   /* 12 — micro */
+  --fs-1: .8125rem; /* 13 — meta */
+  --fs-2: .9375rem; /* 15 — corpo */
+  --fs-3: 1.0625rem;/* 17 — lead */
+  --fs-4: 1.375rem; /* 22 — h3 */
+  --fs-5: 1.75rem;  /* 28 — h2 */
+  --fs-6: 2.5rem;   /* 40 — h1 */
+  --lh-tight: 1.2;
+  --lh-snug: 1.4;
+  --lh-body: 1.65;
+  --measure: 68ch;      /* largura de linha confortável */
+  --measure-narrow: 52ch;
+
+  /* Espaçamento — escala 4px */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px;
+
+  /* Geometria */
+  --r-1: 6px; --r-2: 10px; --r-3: 14px; --r-pill: 999px;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-2: 0 6px 24px rgba(0,0,0,.45);
+  --shadow-3: 0 16px 48px rgba(0,0,0,.55);
+
+  /* Layout */
+  --sidebar-w: 268px;
+  --topbar-h: 56px;
+  --content-max: 1180px;
+}
+
+/* Tema Eggplant (igual ao do SDK) */
+html[data-theme="eggplant"] {
+  --bg: #3d2c3a; --bg-panel: #463342; --bg-raise: #523c4d; --bg-sunken: #2c1f2a;
+  --border: #291c2d; --border-strong: #35253a;
+  --text: #f2f2f2; --text-soft: #ded0da; --text-dim: #b79fae; --text-faint: #8d7484;
+  --accent: #9a6b93; --accent-ink: #241a22; --accent-2: #c6a3bd; --cyan: #d8a7c9;
+}
+/* Tema Comfortable Dark Cyan */
+html[data-theme="cyan"] {
+  --bg: #14161a; --bg-panel: #181a1e; --bg-raise: #1d2026; --bg-sunken: #0c0e12;
+  --border: #282b31; --border-strong: #343943;
+  --accent: #08f2d7; --accent-ink: #04231f; --accent-2: #9aff6b; --cyan: #08f2d7;
+}
+
+/* ==========================================================================
+   RESET / BASE
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-soft);
+  font: var(--fs-2)/var(--lh-body) var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, h4 { color: var(--text); line-height: var(--lh-tight); margin: 0; font-weight: 650; letter-spacing: -.01em; }
+p { margin: 0 0 var(--s-4); max-width: var(--measure); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+code, kbd, samp { font-family: var(--font-mono); font-size: .92em; }
+:not(pre) > code {
+  background: var(--bg-raise); border: 1px solid var(--border);
+  border-radius: var(--r-1); padding: .12em .4em; color: var(--text);
+  white-space: nowrap;
+}
+hr { border: 0; border-top: 1px solid var(--border); margin: var(--s-6) 0; }
+
+/* Foco visível (a11y) */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+.skip {
+  position: absolute; left: var(--s-3); top: -100px; z-index: 100;
+  background: var(--accent); color: var(--accent-ink); font-weight: 700;
+  padding: var(--s-3) var(--s-4); border-radius: var(--r-2); transition: top .15s;
+}
+.skip:focus { top: var(--s-3); }
+
+/* ==========================================================================
+   LAYOUT — topbar + sidebar + conteúdo
+   ========================================================================== */
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  height: var(--topbar-h);
+  display: flex; align-items: center; gap: var(--s-4);
+  padding: 0 var(--s-5);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: var(--s-3); font-weight: 700; color: var(--text); }
+.brand .dot {
+  width: 22px; height: 22px; border-radius: var(--r-1);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: var(--shadow-1);
+}
+.brand small { display: block; font-weight: 500; font-size: var(--fs-0); color: var(--text-dim); letter-spacing: .04em; text-transform: uppercase; }
+.topbar .spacer { flex: 1; }
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  gap: var(--s-7);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--s-6) var(--s-5) var(--s-9);
+  align-items: start;
+}
+
+/* Sidebar */
+.side { position: sticky; top: calc(var(--topbar-h) + var(--s-5)); }
+.side nav { display: grid; gap: var(--s-1); }
+.side .group { margin-top: var(--s-5); }
+.side .group:first-child { margin-top: 0; }
+.side .group > span {
+  display: block; font-size: var(--fs-0); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-faint); margin: 0 0 var(--s-2) var(--s-3);
+}
+.side a {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-1); color: var(--text-soft);
+  border-left: 2px solid transparent;
+  font-size: var(--fs-2);
+}
+.side a:hover { background: var(--bg-panel); color: var(--text); text-decoration: none; }
+.side a[aria-current="true"] {
+  background: var(--bg-panel); color: var(--text);
+  border-left-color: var(--accent); font-weight: 600;
+}
+
+/* Conteúdo */
+main { min-width: 0; display: grid; gap: var(--s-8); }
+section { scroll-margin-top: calc(var(--topbar-h) + var(--s-5)); }
+section > header { margin-bottom: var(--s-5); }
+section > header h2 { font-size: var(--fs-5); }
+section > header p { margin-top: var(--s-2); color: var(--text-dim); font-size: var(--fs-3); max-width: var(--measure); }
+
+h3 { font-size: var(--fs-4); margin: var(--s-7) 0 var(--s-3); }
+h4 { font-size: var(--fs-3); margin: var(--s-5) 0 var(--s-2); color: var(--text); }
+.lead { font-size: var(--fs-3); color: var(--text-soft); max-width: var(--measure); }
+
+/* ==========================================================================
+   COMPONENTES
+   ========================================================================== */
+
+/* Hero */
+.hero {
+  background:
+    radial-gradient(1200px 400px at 15% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--bg-panel), var(--bg));
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  padding: var(--s-7) var(--s-6);
+  box-shadow: var(--shadow-2);
+}
+.hero h1 { font-size: var(--fs-6); margin-bottom: var(--s-3); }
+.hero p { font-size: var(--fs-3); color: var(--text-soft); max-width: 60ch; }
+.hero .actions { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-5); }
+
+/* Badges / tags */
+.badges { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-4); }
+.badge {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  font-size: var(--fs-0); font-weight: 600; letter-spacing: .02em;
+  padding: 3px var(--s-3); border-radius: var(--r-pill);
+  background: var(--bg-raise); border: 1px solid var(--border-strong); color: var(--text-soft);
+}
+.badge.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); color: var(--ok); }
+.badge.warn { border-color: color-mix(in srgb, var(--accent-2) 45%, var(--border)); color: var(--accent-2); }
+.badge.no { border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); color: var(--danger); }
+.badge .k { color: var(--text-faint); font-weight: 500; }
+
+/* Botões */
+.btn {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: 40px; padding: 0 var(--s-4);
+  border-radius: var(--r-2); border: 1px solid var(--border-strong);
+  background: var(--bg-raise); color: var(--text); font: 600 var(--fs-2)/1 var(--font-sans);
+  cursor: pointer; transition: background .12s, border-color .12s, transform .06s;
+}
+.btn:hover { background: color-mix(in srgb, var(--bg-raise) 70%, var(--text) 8%); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, white); }
+.btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+
+/* Cards */
+.grid { display: grid; gap: var(--s-4); }
+.grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card {
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--r-2); padding: var(--s-5);
+  box-shadow: var(--shadow-1);
+}
+.card h4 { margin-top: 0; }
+.card p:last-child { margin-bottom: 0; }
+.card .hint { color: var(--text-dim); font-size: var(--fs-1); }
+
+/* Callout */
+.note {
+  border: 1px solid var(--border-strong); border-left: 3px solid var(--accent);
+  background: var(--bg-panel); border-radius: var(--r-2);
+  padding: var(--s-4) var(--s-5); margin: var(--s-5) 0;
+}
+.note.warn { border-left-color: var(--accent-2); }
+.note.danger { border-left-color: var(--danger); }
+.note.ok { border-left-color: var(--ok); }
+.note strong { color: var(--text); }
+.note p:last-child { margin-bottom: 0; }
+
+/* Código */
+.code { position: relative; margin: var(--s-4) 0; }
+.code pre {
+  margin: 0; padding: var(--s-5);
+  background: var(--bg-sunken); border: 1px solid var(--border);
+  border-radius: var(--r-2); overflow-x: auto;
+  font-size: var(--fs-1); line-height: 1.7; color: var(--text-soft);
+  tab-size: 2;
+}
+.code .copy {
+  position: absolute; top: var(--s-2); right: var(--s-2);
+  font: 600 var(--fs-0)/1 var(--font-sans);
+  padding: var(--s-2) var(--s-3); border-radius: var(--r-1);
+  background: var(--bg-raise); border: 1px solid var(--border-strong);
+  color: var(--text-dim); cursor: pointer; opacity: 0; transition: opacity .12s;
+}
+.code:hover .copy, .code .copy:focus-visible { opacity: 1; }
+.code .copy:hover { color: var(--text); }
+.c-kw { color: var(--accent); }      /* keyword */
+.c-fn { color: var(--cyan); }        /* função */
+.c-st { color: var(--accent-2); }    /* string */
+.c-cm { color: var(--text-faint); font-style: italic; }
+.c-nu { color: #c9a2ff; }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r-2); }
+table { border-collapse: collapse; width: 100%; font-size: var(--fs-1); }
+thead th {
+  text-align: left; background: var(--bg-sunken); color: var(--text);
+  font-weight: 600; padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border-strong); white-space: nowrap;
+}
+tbody td { padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: color-mix(in srgb, var(--bg-raise) 60%, transparent); }
+td code { white-space: nowrap; }
+
+/* API — lista de assinaturas */
+.api { display: grid; gap: var(--s-2); margin: var(--s-4) 0; }
+.sig {
+  display: grid; grid-template-columns: minmax(0,1fr) auto; gap: var(--s-3);
+  align-items: baseline;
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--r-1);
+}
+.sig code { color: var(--text); font-size: var(--fs-1); }
+.sig .ret { color: var(--text-faint); font-size: var(--fs-0); white-space: nowrap; }
+.sig .desc { grid-column: 1 / -1; color: var(--text-dim); font-size: var(--fs-1); margin-top: var(--s-1); }
+
+/* Pills de tema */
+.themes { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+/* Rodapé */
+footer {
+  border-top: 1px solid var(--border); margin-top: var(--s-8);
+  padding: var(--s-6) var(--s-5); color: var(--text-faint); font-size: var(--fs-1);
+  display: flex; flex-wrap: wrap; gap: var(--s-4); justify-content: space-between;
+}
+
+/* ==========================================================================
+   RESPONSIVO
+   ========================================================================== */
+@media (max-width: 980px) {
+  .shell { grid-template-columns: 1fr; gap: var(--s-6); padding-top: var(--s-5); }
+  .side { position: static; }
+  .side nav { grid-auto-flow: row; }
+  .side .group { margin-top: var(--s-4); }
+  .hero { padding: var(--s-6) var(--s-5); }
+  .hero h1 { font-size: var(--fs-5); }
+}
+@media (max-width: 560px) {
+  :root { --fs-6: 2rem; --fs-5: 1.5rem; }
+  .topbar { padding: 0 var(--s-4); }
+  .shell { padding: var(--s-4) var(--s-4) var(--s-8); }
+  .card, .hero { padding: var(--s-4); }
+  .code pre { padding: var(--s-4); font-size: var(--fs-0); }
+  .sig { grid-template-columns: 1fr; }
+}
+/* Zoom 200% / telas estreitas: nada quebra, só empilha */
+@media (min-width: 1400px) {
+  :root { --content-max: 1280px; }
+}
+@media print {
+  .topbar, .side, .code .copy { display: none; }
+  body { background: #fff; color: #000; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="dot" aria-hidden="true"></span>
+    <span>SDK Lua<small>Arcanist</small></span>
+  </div>
+  <span class="spacer"></span>
+  <div class="themes" role="group" aria-label="Tema do site (os mesmos do SDK)">
+    <button class="btn" data-theme-btn="moonlight" aria-pressed="true">Moonlight</button>
+    <button class="btn" data-theme-btn="eggplant" aria-pressed="false">Eggplant</button>
+    <button class="btn" data-theme-btn="cyan" aria-pressed="false">Cyan</button>
+  </div>
+</header>
+
+<div class="shell">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="side" aria-label="Índice">
+    <nav id="toc">
+      <div class="group">
+        <span>Começando</span>
+        <a href="#intro">O que é</a>
+        <a href="#quickstart">Primeiro pack</a>
+        <a href="#modelo">O modelo (2 estados)</a>
+      </div>
+      <div class="group">
+        <span>Referência</span>
+        <a href="#leitura">Leitura</a>
+        <a href="#acoes">Ações</a>
+        <a href="#rtc">Helper / RTC</a>
+        <a href="#eventos">Eventos</a>
+        <a href="#tempo">Timers e coroutines</a>
+        <a href="#estado">Estado (shared / storage)</a>
+        <a href="#ui">UI do usuário final</a>
+        <a href="#temas">Temas</a>
+        <a href="#dbg">game.dbg (pesquisa)</a>
+      </div>
+      <div class="group">
+        <span>Prática</span>
+        <a href="#receitas">Receitas</a>
+        <a href="#erros">Erros e diagnóstico</a>
+        <a href="#exemplos">Exemplos prontos</a>
+        <a href="#estado-sdk">O que já está pronto</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ===================== CONTEÚDO ===================== -->
+  <main id="conteudo">
+
+    <!-- ============ HERO ================= -->
+    <div class="hero" id="intro">
+      <div class="badges">
+        <span class="badge ok">✔ verificado ao vivo</span>
+        <span class="badge"><span class="k">runtime</span> Lua 5.4</span>
+        <span class="badge"><span class="k">testes</span> 100% verde</span>
+        <span class="badge warn"><span class="k">host</span> arcanist (Windows)</span>
+      </div>
+      <h1>SDK Lua do arcanist</h1>
+      <p class="lead">
+        Você escreve Lua e o arcanist faz o resto: ler o jogo, andar, atacar, usar item,
+        reagir a evento e desenhar a sua janela. O C++ fica por baixo, você não precisa
+        mexer nele.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="#quickstart">Começar em 3 passos</a>
+        <a class="btn" href="#exemplos">Ver exemplos prontos</a>
+        <a class="btn" href="#ui">Montar minha UI</a>
+      </div>
+    </div>
+
+    <!-- ============ QUICKSTART ================= -->
+    <section id="quickstart" aria-labelledby="h-quickstart">
+      <header>
+        <h2 id="h-quickstart">Primeiro pack em 3 passos</h2>
+        <p>Pack é uma pasta com um <code>main.lua</code> dentro. O arcanist carrega ela,
+           roda o arquivo e chama o seu <code>ui.frame()</code> a cada quadro.</p>
+      </header>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4>1. Crie a pasta</h4>
+          <p class="hint">Ao lado do <code>arcanist.exe</code>:</p>
+          <div class="code"><pre><code>scripts/
+  meu_bot/
+    main.lua</code></pre></div>
+        </div>
+        <div class="card">
+          <h4>2. Escreva o pack</h4>
+          <p class="hint">O mínimo que já faz algo visível:</p>
+          <div class="code"><pre><code><span class="c-kw">local</span> E  = <span class="c-fn">require</span>(<span class="c-st">"sdk.engine"</span>)
+<span class="c-kw">local</span> ui = game.overlay
+
+<span class="c-kw">function</span> ui.<span class="c-fn">frame</span>()
+  ui.<span class="c-fn">window</span>(<span class="c-st">"Meu Bot"</span>, <span class="c-kw">function</span>()
+    <span class="c-kw">local</span> lp = <span class="c-fn">E.localplayer</span>()
+    ui.<span class="c-fn">text</span>(lp <span class="c-kw">and</span> (<span class="c-st">"HP "</span>..lp.hp_pct..<span class="c-st">"%"</span>) <span class="c-kw">or</span> <span class="c-st">"sem personagem"</span>)
+  <span class="c-kw">end</span>)
+<span class="c-kw">end</span></code></pre></div>
+        </div>
+        <div class="card">
+          <h4>3. Carregue</h4>
+          <p class="hint">Na janela do arcanist, aba <strong>SDK Lua</strong>:</p>
+          <p><span class="btn" aria-disabled="true" style="pointer-events:none">Carregar</span></p>
+          <p class="hint">Precisa de pack novo na lista? <strong>Rescan</strong>.
+             Mudou o código? <strong>Reload</strong>.</p>
+        </div>
+      </div>
+
+      <div class="note ok">
+        <p><strong>Sem personagem no jogo o SDK não sobe.</strong> Ele liga junto com o attach do
+        bot no cliente — se a aba mostrar <em>“host: parado”</em>, entre no personagem primeiro.</p>
+      </div>
+    </section>
+
+    <!-- ============ MODELO ================= -->
+    <section id="modelo" aria-labelledby="h-modelo">
+      <header>
+        <h2 id="h-modelo">O modelo mental: dois estados</h2>
+        <p>O <code>main.lua</code> roda em dois lugares ao mesmo tempo. É a parte que mais
+           confunde no começo, então vale ler com calma.</p>
+      </header>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Estado</th><th>Thread</th><th>O que vive aqui</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>logic</code></td>
+              <td>do script <span class="hint">(~20 ms)</span></td>
+              <td><code>Engine.on</code>, timers, <strong>coroutines</strong>, ações <strong>síncronas</strong></td>
+            </tr>
+            <tr>
+              <td><code>ui</code></td>
+              <td>da GUI <span class="hint">(por quadro)</span></td>
+              <td>só o <code>ui.frame()</code> — desenha e <strong>enfileira</strong> ações</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note warn">
+        <p><strong>Por que dois?</strong> Uma ação no cliente trava a thread que chamou, até
+        2 segundos, esperando o jogo responder. Se fosse a UI chamando, a janela congelava.
+        Por isso a UI só <em>pede</em> e o logic <em>executa</em>.</p>
+      </div>
+
+      <h3>Eles não compartilham variáveis</h3>
+      <p>Uma <code>local</code> do logic não existe na ui. Use a ponte:</p>
+      <div class="code"><pre><code><span class="c-kw">local</span> S  = <span class="c-fn">require</span>(<span class="c-st">"sdk.shared"</span>)   <span class="c-cm">-- memória (some ao fechar)</span>
+<span class="c-kw">local</span> ST = <span class="c-fn">require</span>(<span class="c-st">"sdk.storage"</span>)  <span class="c-cm">-- DISCO (sobrevive ao restart)</span>
+
+<span class="c-fn">Engine.on</span>(<span class="c-st">"Hp"</span>, <span class="c-kw">function</span>(ev) S.<span class="c-fn">set</span>(<span class="c-st">"hp"</span>, ev.pct) <span class="c-kw">end</span>)
+
+<span class="c-kw">function</span> ui.<span class="c-fn">frame</span>()
+  ui.<span class="c-fn">text</span>(<span class="c-st">"HP: "</span> .. <span class="c-fn">tostring</span>(S.<span class="c-fn">get</span>(<span class="c-st">"hp"</span>) <span class="c-kw">or</span> <span class="c-st">"?"</span>))
+<span class="c-kw">end</span></code></pre></div>
+
+      <div class="note">
+        <p><strong>Sabendo onde você está:</strong> <code>HOST_STATE</code> vale
+        <code>"logic"</code> ou <code>"ui"</code>, e <code>game.is_ui</code> é boolean. Use isso
+        para não inicializar duas vezes:</p>
+      </div>
+      <div class="code"><pre><code><span class="c-kw">if</span> HOST_STATE == <span class="c-st">"logic"</span> <span class="c-kw">then</span>
+  ST.<span class="c-fn">set</span>(<span class="c-st">"sessoes"</span>, (<span class="c-fn">tonumber</span>(ST.<span class="c-fn">get</span>(<span class="c-st">"sessoes"</span>)) <span class="c-kw">or</span> <span class="c-nu">0</span>) + <span class="c-nu">1</span>)
+<span class="c-kw">end</span></code></pre></div>
+    </section>
+
+    <!-- ============ LEITURA ================= -->
+    <section id="leitura" aria-labelledby="h-leitura">
+      <header>
+        <h2 id="h-leitura">Leitura</h2>
+        <p>O que dá pra ler do jogo. Só leitura, nada é escrito no cliente.</p>
+      </header>
+
+      <div class="api">
+        <div class="sig">
+          <code>E.localplayer()</code><span class="ret">tabela · nil, err</span>
+          <span class="desc">id, name, x, y, z, hp, hp_max, hp_pct, mana, mana_max, mana_pct, cap, dir,
+          level, xp, stamina, alive, poisoned, paralyzed, hasted, manashielded, <strong>in_pz</strong>, drunk</span>
+        </div>
+        <div class="sig">
+          <code>E.creatures()</code><span class="ret">lista</span>
+          <span class="desc">id, name, x, y, z, dist, hp_pct, is_self, is_player <em>(só outros)</em>, is_monster, is_npc, skull</span>
+        </div>
+        <div class="sig">
+          <code>E.creature(id)</code><span class="ret">tabela · nil</span>
+          <span class="desc">Uma criatura específica.</span>
+        </div>
+        <div class="sig">
+          <code>E.target()</code><span class="ret">number</span>
+          <span class="desc">Id da criatura que você está atacando. <code>0</code> = sem alvo.</span>
+        </div>
+        <div class="sig">
+          <code>C.count_item(item_id)</code><span class="ret">number · nil, err</span>
+          <span class="desc">Soma no inventário/containers abertos. <strong>Fail-closed</strong>: sem container aberto devolve erro, nunca <code>0</code>.</span>
+        </div>
+      </div>
+
+      <div class="note ok">
+        <p><strong>Tipos são nativos.</strong> Números chegam como <code>number</code> e condições
+        como <code>boolean</code> — então <code>if lp.hp_pct &lt; 40 then</code> e
+        <code>if lp.in_pz then</code> funcionam como você espera (nada de comparar string).</p>
+      </div>
+    </section>
+
+    <!-- ============ AÇÕES ================= -->
+    <section id="acoes" aria-labelledby="h-acoes">
+      <header>
+        <h2 id="h-acoes">Ações</h2>
+        <p>No estado <code>logic</code> executam na hora e devolvem <code>ok, err</code>.
+           No estado <code>ui</code> são <strong>enfileiradas</strong> e devolvem <code>true</code>
+           na hora.</p>
+      </header>
+
+      <h3>Movimento e chat — <code>sdk.localplayer</code> / <code>sdk.navigator</code></h3>
+      <div class="api">
+        <div class="sig"><code>N.go(x, y, z)</code><span class="ret">ok, err</span>
+          <span class="desc"><strong>Pathfinding do cliente</strong> (o mesmo do clique no minimapa) — anda vários tiles sozinho.</span></div>
+        <div class="sig"><code>L.walk(x, y, z)</code><span class="ret">ok, err</span>
+          <span class="desc">Um passo na direção do tile (controle fino).</span></div>
+        <div class="sig"><code>L.step(dir)</code><span class="ret">ok, err</span>
+          <span class="desc">Passo em direção explícita: 0=N 1=E 2=S 3=W 4=SW 5=SE 6=NW 7=NE.</span></div>
+        <div class="sig"><code>L.say(texto)</code><span class="ret">ok, err</span><span class="desc">Fala no chat.</span></div>
+        <div class="sig"><code>L.stop()</code><span class="ret">ok, err</span><span class="desc">Cancela o andar.</span></div>
+      </div>
+
+      <h3>Combate — <code>sdk.localplayer</code></h3>
+      <div class="api">
+        <div class="sig"><code>L.attack(creature_id)</code><span class="ret">ok, err</span>
+          <span class="desc">Ataca a criatura. <code>0</code> cancela o ataque atual.</span></div>
+      </div>
+
+      <h3>Itens — <code>sdk.localplayer</code> / <code>sdk.tools</code> / <code>sdk.stash</code></h3>
+      <div class="api">
+        <div class="sig"><code>L.use_item(cid, slot, item_id)</code><span class="ret">ok, err</span></div>
+        <div class="sig"><code>L.use_at(x, y, z, item_id)</code><span class="ret">ok, err</span></div>
+        <div class="sig"><code>L.move_item(from_cid, from_slot, to_cid, to_slot, item_id[, count])</code><span class="ret">ok, err</span></div>
+        <div class="sig"><code>L.close_all()</code><span class="ret">ok, err</span><span class="desc">Fecha todos os containers.</span></div>
+        <div class="sig"><code>T.quickloot()</code><span class="ret">ok, err</span><span class="desc">Loot do chão ao redor.</span></div>
+        <div class="sig"><code>S.stow(cid)</code><span class="ret">ok, err</span><span class="desc">Manda o container inteiro pro Supply Stash (irreversível).</span></div>
+        <div class="sig"><code>S.withdraw(item_id, count)</code><span class="ret">ok, err</span><span class="desc">Saca do stash.</span></div>
+      </div>
+
+      <h3>NPC / cavebot — <code>sdk.npc</code> / <code>sdk.cavebot</code></h3>
+      <div class="api">
+        <div class="sig"><code>Np.buy(item_id[, count[, ignore_cap[, in_backpack]]])</code><span class="ret">ok, err</span></div>
+        <div class="sig"><code>Np.sell(item_id[, count])</code><span class="ret">ok, err</span></div>
+        <div class="sig"><code>B.start() · B.stop() · B.set(chave, valor)</code><span class="ret">ok, err</span></div>
+        <div class="sig"><code>B.route_load(path) · B.route_save(path) · B.route_clear()</code><span class="ret">ok, err</span></div>
+      </div>
+
+      <div class="note">
+        <p><strong>Contrato:</strong> sucesso devolve <code>true</code>; falha devolve
+        <code>nil, err</code>. Sempre cheque — e logue o motivo, que ele vem em português.</p>
+      </div>
+      <div class="code"><pre><code><span class="c-kw">local</span> ok, err = L.<span class="c-fn">say</span>(<span class="c-st">"oi"</span>)
+<span class="c-kw">if not</span> ok <span class="c-kw">then</span> game.<span class="c-fn">log</span>(<span class="c-st">"falhou: "</span> .. <span class="c-fn">tostring</span>(err)) <span class="c-kw">end</span></code></pre></div>
+    </section>
+
+    <!-- ============ RTC ================= -->
+    <section id="rtc" aria-labelledby="h-rtc">
+      <header>
+        <h2 id="h-rtc">Helper / RTC — configurar o auto do bot</h2>
+        <p>Auto-target, auto-cast de magias e runas, cura, poções, sio, haste. Você não precisa
+           decorar os nomes: <code>H.list()</code> devolve o catálogo e você monta o painel em
+           cima dele.</p>
+      </header>
+
+      <div class="api">
+        <div class="sig"><code>H.list()</code><span class="ret">lista</span>
+          <span class="desc">Todos os campos: <code>name</code>, <code>label</code>, <code>group</code>,
+          <code>type</code> ("u8"/"u32"), <code>min</code>, <code>max</code>. Grupos:
+          geral, cura, pocoes, sio, haste_treino, extras, perfil.</span></div>
+        <div class="sig"><code>H.get(campo)</code><span class="ret">number</span><span class="desc">Valor atual.</span></div>
+        <div class="sig"><code>H.set(campo, valor)</code><span class="ret">ok, err</span><span class="desc">Grava (com validação de faixa).</span></div>
+        <div class="sig"><code>H.threshold_set(chave, valor)</code><span class="ret">ok, err</span>
+          <span class="desc">Thresholds do profile do bot (cura_hp_pct, pocao_hp_pct, …).</span></div>
+      </div>
+
+      <div class="code"><pre><code><span class="c-cm">-- painel de config gerado DO CATÁLOGO (não precisa saber os nomes)</span>
+<span class="c-kw">for</span> _, f <span class="c-kw">in</span> <span class="c-fn">ipairs</span>(H.<span class="c-fn">list</span>()) <span class="c-kw">do</span>
+  <span class="c-kw">local</span> v = H.<span class="c-fn">get</span>(f.name)
+  <span class="c-kw">if</span> f.type == <span class="c-st">"u8"</span> <span class="c-kw">and</span> f.max == <span class="c-nu">1</span> <span class="c-kw">then</span>
+    <span class="c-kw">local</span> novo = ui.<span class="c-fn">checkbox</span>(f.label, v ~= <span class="c-nu">0</span>)
+    <span class="c-kw">if</span> novo ~= (v ~= <span class="c-nu">0</span>) <span class="c-kw">then</span> H.<span class="c-fn">set</span>(f.name, novo <span class="c-kw">and</span> <span class="c-st">"1"</span> <span class="c-kw">or</span> <span class="c-st">"0"</span>) <span class="c-kw">end</span>
+  <span class="c-kw">else</span>
+    <span class="c-kw">local</span> novo = ui.<span class="c-fn">slider</span>(f.name, v, f.min, f.max)
+    <span class="c-kw">if</span> novo ~= v <span class="c-kw">then</span> H.<span class="c-fn">set</span>(f.name, <span class="c-fn">tostring</span>(novo)) <span class="c-kw">end</span>
+  <span class="c-kw">end</span>
+<span class="c-kw">end</span></code></pre></div>
+
+      <div class="note">
+        <p><strong>49 campos</strong> hoje. O <code>scripts/demo_ui/main.lua</code> monta esse
+        painel inteiro — copie de lá.</p>
+      </div>
+    </section>
+
+    <!-- ============ EVENTOS ================= -->
+    <section id="eventos" aria-labelledby="h-eventos">
+      <header>
+        <h2 id="h-eventos">Eventos</h2>
+        <p>Gerados por leitura de estado (polling), sem escrever nada no cliente. Disparam só
+           quando o valor muda.</p>
+      </header>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Evento</th><th>Campos</th><th>Tipo</th><th>Quando dispara</th></tr></thead>
+          <tbody>
+            <tr><td><code>Hp</code></td><td><code>pct</code>, <code>hp</code>, <code>hp_max</code></td><td>number</td><td>HP% mudou</td></tr>
+            <tr><td><code>Mana</code></td><td><code>pct</code>, <code>mana</code>, <code>mana_max</code></td><td>number</td><td>mana% mudou</td></tr>
+            <tr><td><code>PositionChange</code></td><td><code>x</code>, <code>y</code>, <code>z</code></td><td>number</td><td>você andou</td></tr>
+            <tr><td><code>Level</code></td><td><code>level</code>, <code>xp</code></td><td>number</td><td>nível mudou</td></tr>
+            <tr><td><code>Conditions</code></td><td><code>poisoned</code>, <code>paralyzed</code>, <code>hasted</code>, <code>manashielded</code>, <code>in_pz</code>, <code>drunk</code>, <code>alive</code></td><td>boolean</td><td>conjunto mudou</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code"><pre><code><span class="c-kw">local</span> id = <span class="c-fn">Engine.on</span>(<span class="c-st">"Hp"</span>, <span class="c-kw">function</span>(ev)
+  <span class="c-kw">if</span> ev.pct &lt; <span class="c-nu">40</span> <span class="c-kw">then</span> game.<span class="c-fn">alert</span>(<span class="c-st">"HP baixo!"</span>) <span class="c-kw">end</span>
+<span class="c-kw">end</span>)
+
+<span class="c-fn">Engine.onAny</span>(<span class="c-kw">function</span>(ev) game.<span class="c-fn">log</span>(<span class="c-st">"evento: "</span> .. ev.name) <span class="c-kw">end</span>)
+<span class="c-fn">Engine.off</span>(id)</code></pre></div>
+
+      <div class="note ok">
+        <p>A primeira leitura é <strong>baseline</strong> — não emite evento (evita rajada ao
+        entrar no mundo). Handlers rodam no estado <code>logic</code>, dentro do tick; um handler
+        que quebra é isolado e logado — os outros continuam.</p>
+      </div>
+    </section>
+
+    <!-- ============ TEMPO ================= -->
+    <section id="tempo" aria-labelledby="h-tempo">
+      <header>
+        <h2 id="h-tempo">Timers e coroutines</h2>
+        <p>Coroutine é o jeito de escrever feature: você escreve <em>em linha reta</em> e o
+           <code>wait</code> devolve o controle.</p>
+      </header>
+
+      <div class="code"><pre><code><span class="c-fn">Engine.spawn</span>(<span class="c-kw">function</span>()
+  <span class="c-kw">while true do</span>
+    <span class="c-fn">wait</span>(<span class="c-nu">1000</span>)                       <span class="c-cm">-- volta no próximo tick</span>
+    <span class="c-kw">if</span> S.<span class="c-fn">get</span>(<span class="c-st">"ligado"</span>) <span class="c-kw">then</span>
+      <span class="c-kw">local</span> lp = <span class="c-fn">E.localplayer</span>()
+      <span class="c-kw">if</span> lp <span class="c-kw">and</span> lp.hp_pct &lt; <span class="c-nu">60</span> <span class="c-kw">then</span> L.<span class="c-fn">say</span>(<span class="c-st">"exura"</span>) <span class="c-kw">end</span>
+    <span class="c-kw">end</span>
+  <span class="c-kw">end</span>
+<span class="c-kw">end</span>)</code></pre></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Função</th><th>Para que</th></tr></thead>
+          <tbody>
+            <tr><td><code>Engine.spawn(fn)</code></td><td>Roda <code>fn</code> numa coroutine; devolve id.</td></tr>
+            <tr><td><code>wait(ms)</code></td><td>Pausa a coroutine. <strong>Só dentro de spawn</strong> — fora dá erro de propósito.</td></tr>
+            <tr><td><code>Engine.every(ms, fn)</code> / <code>after(ms, fn)</code></td><td>Timer periódico / uma vez.</td></tr>
+            <tr><td><code>Engine.cancel(id)</code></td><td>Para coroutine, timer ou handler.</td></tr>
+            <tr><td><code>Engine.now()</code></td><td>Milissegundos monotônicos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note danger">
+        <p><strong>Armadilha clássica:</strong> <code>while true do wait(500) end</code> no corpo do
+        script (fora do <code>spawn</code>) giraria para sempre e travaria o carregamento. Por isso
+        o <code>wait</code> fora de coroutine é <strong>erro</strong>, não “retorna false”.</p>
+      </div>
+    </section>
+
+    <!-- ============ ESTADO ================= -->
+    <section id="estado" aria-labelledby="h-estado">
+      <header>
+        <h2 id="h-estado">Estado: memória e disco</h2>
+        <p>Duas caixas de chave-valor. A diferença é só uma: a segunda sobrevive ao restart.</p>
+      </header>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><code>sdk.shared</code> — memória</h4>
+          <p class="hint">Ponte entre os dois estados. Some ao fechar o bot.</p>
+          <div class="api">
+            <div class="sig"><code>S.set(k, v)</code><span class="ret">ok</span><span class="desc"><code>v</code> = bool, number ou string. <code>nil</code> apaga.</span></div>
+            <div class="sig"><code>S.get(k)</code><span class="ret">valor · nil</span></div>
+            <div class="sig"><code>S.del(k)</code><span class="ret">bool</span></div>
+            <div class="sig"><code>S.count()</code><span class="ret">number</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h4><code>sdk.storage</code> — disco</h4>
+          <p class="hint">Grava em <code>scripts/&lt;pack&gt;/storage.dat</code> a cada mudança.
+             É onde vive a config do usuário final.</p>
+          <div class="api">
+            <div class="sig"><code>ST.set(k, v)</code><span class="ret">ok, err</span></div>
+            <div class="sig"><code>ST.get(k)</code><span class="ret">valor · nil</span></div>
+            <div class="sig"><code>ST.del(k)</code> · <code>ST.all()</code> · <code>ST.save()</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code"><pre><code><span class="c-cm">-- o padrão de UI de produto: lê com default, grava quando o usuário mexe</span>
+<span class="c-kw">local</span> curar = <span class="c-fn">tonumber</span>(ST.<span class="c-fn">get</span>(<span class="c-st">"curar_pct"</span>)) <span class="c-kw">or</span> <span class="c-nu">60</span>
+
+<span class="c-kw">function</span> ui.<span class="c-fn">frame</span>()
+  <span class="c-kw">local</span> novo = ui.<span class="c-fn">slider</span>(<span class="c-st">"Curar abaixo de %"</span>, curar, <span class="c-nu">10</span>, <span class="c-nu">95</span>)
+  <span class="c-kw">if</span> novo ~= curar <span class="c-kw">then</span>
+    curar = novo
+    ST.<span class="c-fn">set</span>(<span class="c-st">"curar_pct"</span>, novo)   <span class="c-cm">-- sobrevive ao restart</span>
+  <span class="c-kw">end</span>
+<span class="c-kw">end</span></code></pre></div>
+    </section>
+
+    <!-- ============ UI ================= -->
+    <section id="ui" aria-labelledby="h-ui">
+      <header>
+        <h2 id="h-ui">UI do usuário final</h2>
+        <p>Os widgets do ImGui expostos direto no Lua. Você monta a janela que o seu usuário
+           vê, e pode esconder a UI de debug do arcanist se quiser.</p>
+      </header>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Widget</th><th>Assinatura</th><th>Devolve</th></tr></thead>
+          <tbody>
+            <tr><td>Janela</td><td><code>ui.window(titulo, fn)</code></td><td>—</td></tr>
+            <tr><td>Texto</td><td><code>ui.text(...)</code> · <code>ui.text_wrapped(s)</code> · <code>ui.bullet(s)</code></td><td>—</td></tr>
+            <tr><td>Cor</td><td><code>ui.color_text(r, g, b, texto)</code></td><td>—</td></tr>
+            <tr><td>Layout</td><td><code>ui.separator()</code> · <code>ui.same_line()</code> · <code>ui.spacing()</code></td><td>—</td></tr>
+            <tr><td>Dica</td><td><code>ui.tooltip(texto)</code></td><td>—</td></tr>
+            <tr><td>Barra</td><td><code>ui.progress(pct)</code></td><td>—</td></tr>
+            <tr><td>Botão</td><td><code>ui.button(label)</code></td><td><code>bool</code></td></tr>
+            <tr><td>Checkbox</td><td><code>ui.checkbox(label, v)</code></td><td><code>bool</code> <span class="hint">(tolera nil)</span></td></tr>
+            <tr><td>Texto editável</td><td><code>ui.input(label, v)</code></td><td><code>string</code></td></tr>
+            <tr><td>Slider</td><td><code>ui.slider(label, v[, min, max])</code></td><td><code>number</code></td></tr>
+            <tr><td>Combo</td><td><code>ui.combo(label, lista[, idx])</code></td><td><code>number</code> <span class="hint">(1-based)</span></td></tr>
+            <tr><td>Lista</td><td><code>ui.selectable(label, sel)</code></td><td><code>bool</code></td></tr>
+            <tr><td>Seção</td><td><code>ui.collapsing(label, fn)</code></td><td>—</td></tr>
+            <tr><td>Região</td><td><code>ui.child(id, fn)</code></td><td>—</td></tr>
+            <tr><td>Tabela</td><td><code>ui.table(id, headers, linhas)</code></td><td>—</td></tr>
+            <tr><td>Esconder host</td><td><code>ui.hide_host(bool)</code> · <code>ui.host_hidden()</code></td><td><code>bool</code></td></tr>
+            <tr><td>Tema</td><td><code>ui.theme(nome)</code> · <code>ui.themes()</code></td><td><code>bool</code> / lista</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Um painel completo</h3>
+      <div class="code"><pre><code><span class="c-kw">local</span> ui = game.overlay
+<span class="c-kw">local</span> ST = <span class="c-fn">require</span>(<span class="c-st">"sdk.storage"</span>)
+
+<span class="c-kw">function</span> ui.<span class="c-fn">frame</span>()
+  ui.<span class="c-fn">window</span>(<span class="c-st">"Meu Bot"</span>, <span class="c-kw">function</span>()
+
+    <span class="c-cm">-- tabela de stats (sem boilerplate de coluna)</span>
+    <span class="c-kw">local</span> lp = <span class="c-fn">E.localplayer</span>()
+    <span class="c-kw">if</span> lp <span class="c-kw">then</span>
+      ui.<span class="c-fn">table</span>(<span class="c-st">"##stats"</span>, {<span class="c-st">"Pos"</span>, <span class="c-st">"HP"</span>, <span class="c-st">"Mana"</span>}, {{
+        (<span class="c-st">"%d,%d,%d"</span>):<span class="c-fn">format</span>(lp.x, lp.y, lp.z),
+        (<span class="c-st">"%d%%"</span>):<span class="c-fn">format</span>(lp.hp_pct),
+        (<span class="c-st">"%d%%"</span>):<span class="c-fn">format</span>(lp.mana_pct),
+      }})
+    <span class="c-kw">end</span>
+
+    <span class="c-cm">-- seção colapsável com config persistida</span>
+    ui.<span class="c-fn">collapsing</span>(<span class="c-st">"Automação"</span>, <span class="c-kw">function</span>()
+      <span class="c-kw">local</span> on = ui.<span class="c-fn">checkbox</span>(<span class="c-st">"Auto-loot"</span>, ST.<span class="c-fn">get</span>(<span class="c-st">"loot"</span>) == <span class="c-kw">true</span>)
+      <span class="c-kw">if</span> on ~= (ST.<span class="c-fn">get</span>(<span class="c-st">"loot"</span>) == <span class="c-kw">true</span>) <span class="c-kw">then</span>
+        ST.<span class="c-fn">set</span>(<span class="c-st">"loot"</span>, on)
+        game.<span class="c-fn">alert</span>(on <span class="c-kw">and</span> <span class="c-st">"Auto-loot ligado"</span> <span class="c-kw">or</span> <span class="c-st">"desligado"</span>)
+      <span class="c-kw">end</span>
+    <span class="c-kw">end</span>)
+
+    <span class="c-cm">-- esconder a UI de debug do arcanist (sempre deixe um caminho de volta)</span>
+    ui.<span class="c-fn">separator</span>()
+    <span class="c-kw">local</span> h = ui.<span class="c-fn">checkbox</span>(<span class="c-st">"Esconder a UI do arcanist"</span>, ST.<span class="c-fn">get</span>(<span class="c-st">"hide"</span>) == <span class="c-kw">true</span>)
+    <span class="c-kw">if</span> h ~= (ST.<span class="c-fn">get</span>(<span class="c-st">"hide"</span>) == <span class="c-kw">true</span>) <span class="c-kw">then</span>
+      ST.<span class="c-fn">set</span>(<span class="c-st">"hide"</span>, h)
+      ui.<span class="c-fn">hide_host</span>(h)
+    <span class="c-kw">end</span>
+  <span class="c-kw">end</span>)
+<span class="c-kw">end</span></code></pre></div>
+
+      <div class="note warn">
+        <p><strong>Regras da UI:</strong> o <code>ui.frame()</code> roda a cada quadro — nada de
+        trabalho pesado nem laço dentro dele. Estruturas (<code>window</code>,
+        <code>collapsing</code>, <code>child</code>) <strong>sempre fecham</strong>, mesmo se o
+        corpo der erro: o layout não corrompe.</p>
+      </div>
+    </section>
+
+    <!-- ============ TEMAS ================= -->
+    <section id="temas" aria-labelledby="h-temas">
+      <header>
+        <h2 id="h-temas">Temas</h2>
+        <p>Quatro temas do ImGui embutidos. Você escolhe qual o usuário final vê, e pode deixar
+           ele trocar (salvando em <code>sdk.storage</code>).</p>
+      </header>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4>Disponíveis</h4>
+          <div class="api">
+            <div class="sig"><code>ui.themes()</code><span class="ret">lista</span><span class="desc">moonlight, eggplant, cyan, dark</span></div>
+            <div class="sig"><code>ui.theme(nome)</code><span class="ret">bool</span><span class="desc">Nome inválido <strong>falha</strong> (não muda nada).</span></div>
+          </div>
+          <p class="hint">Clique nos botões no topo desta página para ver os mesmos três temas do SDK
+             aplicados aqui.</p>
+        </div>
+        <div class="card">
+          <h4>Seletor pronto</h4>
+          <div class="code"><pre><code><span class="c-kw">local</span> temas = ui.<span class="c-fn">themes</span>()
+<span class="c-kw">local</span> atual = ST.<span class="c-fn">get</span>(<span class="c-st">"tema"</span>) <span class="c-kw">or</span> <span class="c-st">"moonlight"</span>
+<span class="c-kw">local</span> idx = <span class="c-nu">1</span>
+<span class="c-kw">for</span> i, t <span class="c-kw">in</span> <span class="c-fn">ipairs</span>(temas) <span class="c-kw">do</span>
+  <span class="c-kw">if</span> t == atual <span class="c-kw">then</span> idx = i <span class="c-kw">end</span>
+<span class="c-kw">end</span>
+<span class="c-kw">local</span> novo = ui.<span class="c-fn">combo</span>(<span class="c-st">"Tema"</span>, temas, idx)
+<span class="c-kw">if</span> novo ~= idx <span class="c-kw">then</span>
+  ui.<span class="c-fn">theme</span>(temas[novo]); ST.<span class="c-fn">set</span>(<span class="c-st">"tema"</span>, temas[novo])
+<span class="c-kw">end</span></code></pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DBG ================= -->
+    <section id="dbg" aria-labelledby="h-dbg">
+      <header>
+        <h2 id="h-dbg">game.dbg — ferramenta de pesquisa</h2>
+        <p>Leitura crua de memória, para investigar e validar. Não use em script de produção.</p>
+      </header>
+      <div class="api">
+        <div class="sig"><code>game.dbg.game_va()</code><span class="ret">number</span><span class="desc">Endereço do objeto Game.</span></div>
+        <div class="sig"><code>game.dbg.read_bytes(va, n)</code><span class="ret">string · nil, err</span>
+          <span class="desc">Bytes crus (use <code>string.unpack</code> para interpretar).</span></div>
+        <div class="sig"><code>game.dbg.hex(s)</code><span class="ret">string</span><span class="desc">Hex dump de uma string de bytes.</span></div>
+      </div>
+      <div class="note">
+        <p>Foi com isso que a gente achou um deslocamento de <code>+0x98</code> na struct do
+        personagem depois de um update do cliente — o próprio SDK virou a ferramenta de RE.</p>
+      </div>
+    </section>
+
+    <!-- ============ RECEITAS ================= -->
+    <section id="receitas" aria-labelledby="h-receitas">
+      <header>
+        <h2 id="h-receitas">Receitas</h2>
+        <p>Copie e adapte. Todas seguem o mesmo esqueleto: config no disco, feature em coroutine,
+           UI que reflete o estado.</p>
+      </header>
+
+      <h3>Healer com coroutine</h3>
+      <div class="code"><pre><code><span class="c-kw">local</span> E, L, ST = <span class="c-fn">require</span>(<span class="c-st">"sdk.engine"</span>), <span class="c-fn">require</span>(<span class="c-st">"sdk.localplayer"</span>), <span class="c-fn">require</span>(<span class="c-st">"sdk.storage"</span>)
+<span class="c-kw">local</span> S = <span class="c-fn">require</span>(<span class="c-st">"sdk.shared"</span>)
+
+<span class="c-fn">Engine.spawn</span>(<span class="c-kw">function</span>()
+  <span class="c-kw">while true do</span>
+    <span class="c-fn">wait</span>(<span class="c-nu">1000</span>)
+    <span class="c-kw">if</span> S.<span class="c-fn">get</span>(<span class="c-st">"heal_on"</span>) <span class="c-kw">then</span>
+      <span class="c-kw">local</span> lp = <span class="c-fn">E.localplayer</span>()
+      <span class="c-kw">local</span> pct = <span class="c-fn">tonumber</span>(ST.<span class="c-fn">get</span>(<span class="c-st">"heal_pct"</span>)) <span class="c-kw">or</span> <span class="c-nu">60</span>
+      <span class="c-kw">if</span> lp <span class="c-kw">and</span> lp.hp_pct &lt; pct <span class="c-kw">then</span>
+        <span class="c-kw">local</span> ok, err = L.<span class="c-fn">say</span>(<span class="c-st">"exura"</span>)
+        S.<span class="c-fn">set</span>(<span class="c-st">"heal_status"</span>, ok <span class="c-kw">and</span> <span class="c-st">"curei"</span> <span class="c-kw">or</span> (<span class="c-st">"falhou: "</span>..<span class="c-fn">tostring</span>(err)))
+      <span class="c-kw">end</span>
+    <span class="c-kw">end</span>
+  <span class="c-kw">end</span>
+<span class="c-kw">end</span>)</code></pre></div>
+
+      <h3>Loop de caminhada com liga/desliga</h3>
+      <div class="code"><pre><code><span class="c-fn">Engine.spawn</span>(<span class="c-kw">function</span>()
+  <span class="c-kw">while true do</span>
+    <span class="c-fn">wait</span>(<span class="c-nu">800</span>)
+    <span class="c-kw">if</span> S.<span class="c-fn">get</span>(<span class="c-st">"andar"</span>) <span class="c-kw">then</span>
+      <span class="c-kw">local</span> lp = <span class="c-fn">E.localplayer</span>()
+      <span class="c-kw">if</span> lp <span class="c-kw">then</span> N.<span class="c-fn">go</span>(lp.x + <span class="c-nu">5</span>, lp.y, lp.z) <span class="c-kw">end</span>   <span class="c-cm">-- pathfinding do cliente</span>
+    <span class="c-kw">end</span>
+  <span class="c-kw">end</span>
+<span class="c-kw">end</span>)</code></pre></div>
+
+      <h3>Reagir a dano crítico</h3>
+      <div class="code"><pre><code><span class="c-fn">Engine.on</span>(<span class="c-st">"Hp"</span>, <span class="c-kw">function</span>(ev)
+  <span class="c-kw">if</span> ev.pct &lt; <span class="c-nu">30</span> <span class="c-kw">then</span>
+    game.<span class="c-fn">alert</span>(<span class="c-st">"HP crítico: "</span> .. ev.pct .. <span class="c-st">"%"</span>)
+    L.<span class="c-fn">say</span>(<span class="c-st">"exura gran"</span>)
+  <span class="c-kw">end</span>
+<span class="c-kw">end</span>)</code></pre></div>
+
+      <h3>Refill do stash (fail-closed)</h3>
+      <div class="code"><pre><code><span class="c-kw">local</span> n = C.<span class="c-fn">count_item</span>(<span class="c-nu">266</span>)
+<span class="c-kw">if</span> n <span class="c-kw">then</span>
+  <span class="c-kw">if</span> n &lt; <span class="c-nu">50</span> <span class="c-kw">then</span> S.<span class="c-fn">withdraw</span>(<span class="c-nu">266</span>, <span class="c-nu">50</span> - n) <span class="c-kw">end</span>
+<span class="c-kw">else</span>
+  game.<span class="c-fn">log</span>(<span class="c-st">"abra a mochila: sem container aberto não dá pra contar"</span>)
+<span class="c-kw">end</span></code></pre></div>
+    </section>
+
+    <!-- ============ ERROS ================= -->
+    <section id="erros" aria-labelledby="h-erros">
+      <header>
+        <h2 id="h-erros">Erros e diagnóstico</h2>
+        <p>Nada do que você escrever derruba o bot. Mas saiba onde olhar.</p>
+      </header>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4>Contratos</h4>
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><td><code>true</code></td><td>ação deu certo</td></tr>
+                <tr><td><code>nil, err</code></td><td>ação falhou — mostre o motivo</td></tr>
+                <tr><td><code>number</code> / <code>bool</code></td><td>leitura com valor</td></tr>
+                <tr><td><code>nil, err</code></td><td>leitura indisponível (fail-closed)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h4>Onde ver</h4>
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><td><code>arcanist.log</code></td><td>ao lado do exe; tudo com timestamp</td></tr>
+                <tr><td>aba <strong>SDK Lua</strong></td><td>estado do host, packs, último erro</td></tr>
+                <tr><td><code>game.log(msg)</code></td><td>vai pro log e pra GUI</td></tr>
+                <tr><td><code>game.alert(msg)</code></td><td>aviso na tela (4s)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <h3>Troubleshooting</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Sintoma</th><th>Causa provável</th></tr></thead>
+          <tbody>
+            <tr><td>Painel não aparece</td><td>pack não carregou (veja o último erro) ou <code>ui.frame</code> não definido</td></tr>
+            <tr><td><code>wait</code> dá erro</td><td>chamado fora de <code>Engine.spawn</code></td></tr>
+            <tr><td>Variável “sumiu” na UI</td><td>usou <code>local</code> em vez de <code>sdk.shared</code></td></tr>
+            <tr><td>Ação “não faz nada”</td><td>no estado <code>ui</code> ela só enfileira — confira o log</td></tr>
+            <tr><td>Config não persiste</td><td>usou <code>sdk.shared</code> em vez de <code>sdk.storage</code></td></tr>
+            <tr><td>Contador dobra por restart</td><td><code>main.lua</code> roda 2x — guarde com <code>HOST_STATE</code></td></tr>
+            <tr><td>Host “parado” na aba</td><td>entre no personagem: o SDK liga junto com o attach</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ EXEMPLOS ================= -->
+    <section id="exemplos" aria-labelledby="h-exemplos">
+      <header>
+        <h2 id="h-exemplos">Exemplos prontos</h2>
+        <p>Todos em <code>scripts/</code>. Copie a pasta, mude, clique <strong>Carregar</strong>.</p>
+      </header>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4>⭐ <code>demo_ui/</code></h4>
+          <p>O pack modelo de produto: stats em tabela, toggles persistidos, <strong>painel do RTC
+             gerado do catálogo</strong>, seletor de tema, esconder a UI do host, alertas e uma
+             coroutine de feature.</p>
+          <p class="hint">Comece por ele.</p>
+        </div>
+        <div class="card">
+          <h4><code>examples/01..05</code></h4>
+          <p><code>01_hello</code> · <code>02_andar</code> · <code>03_eventos</code> ·
+             <code>04_healer</code> · <code>05_hud</code> — do mínimo ao HUD de produto.</p>
+        </div>
+        <div class="card">
+          <h4><code>refill/</code></h4>
+          <p>Feature útil escrita só em Lua: refill de poções pelo stash, fail-closed e desligado
+             por padrão.</p>
+        </div>
+        <div class="card">
+          <h4><code>_teste/</code></h4>
+          <p>Pack de verificação: executa a cadeia inteira sozinho e loga cada resultado. Use para
+          validar uma instalação nova.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ESTADO DO SDK ================= -->
+    <section id="estado-sdk" aria-labelledby="h-estado-sdk">
+      <header>
+        <h2 id="h-estado-sdk">O que já está pronto</h2>
+        <p>Isso aqui foi testado com personagem no jogo, não só no papel.</p>
+      </header>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4>Funcionando</h4>
+          <ul style="margin:0; padding-left:1.1em; color:var(--text-soft)">
+            <li>Leitura completa do personagem e criaturas</li>
+            <li>~35 ações (andar, atacar, itens, NPC, stash)</li>
+            <li>Pathfinding do cliente (<code>N.go</code>)</li>
+            <li>49 campos do RTC (list/get/set)</li>
+            <li>5 eventos tipados</li>
+            <li>Coroutines com <code>wait</code></li>
+            <li>Config persistente por pack</li>
+            <li>UI completa + 4 temas + toast</li>
+            <li>Esconder a UI de debug do host</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Ainda não</h4>
+          <ul style="margin:0; padding-left:1.1em; color:var(--text-soft)">
+            <li>Evento de chat (<code>Talk</code>)</li>
+            <li>Listar containers abertos (<code>C.open()</code>)</li>
+            <li>Watchdog contra laço infinito no script</li>
+            <li>Limite de faixa em alguns argumentos</li>
+          </ul>
+          <p class="hint">Nada disso bloqueia escrever feature: são próximos passos.</p>
+        </div>
+        <div class="card">
+          <h4>Como foi validado</h4>
+          <ul style="margin:0; padding-left:1.1em; color:var(--text-soft)">
+            <li>Suíte headless (host, ações, UI, storage) — 100% verde</li>
+            <li>Teste ao vivo com personagem: leitura, andar multi-tile, evento, ataque, loot</li>
+            <li>Persistência provada entre restarts</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>Docs do SDK Lua do arcanist. Arquivo único, sem dependência.</span>
+      <span>Tema <span id="theme-name">moonlight</span> (os mesmos do <code>ui.theme</code>)</span>
+    </footer>
+  </main>
+</div>
+
+<script>
+/* ------------------------------------------------------------------ temas */
+const THEMES = ['moonlight', 'eggplant', 'cyan'];
+function setTheme(name) {
+  document.documentElement.setAttribute('data-theme', name);
+  document.getElementById('theme-name').textContent = name;
+  document.querySelectorAll('[data-theme-btn]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.themeBtn === name));
+  });
+  try { localStorage.setItem('sdk-docs-theme', name); } catch (e) {}
+}
+document.querySelectorAll('[data-theme-btn]').forEach(btn => {
+  btn.addEventListener('click', () => setTheme(btn.dataset.themeBtn));
+});
+try {
+  const saved = localStorage.getItem('sdk-docs-theme');
+  if (saved && THEMES.includes(saved)) setTheme(saved);
+} catch (e) {}
+
+/* ------------------------------------------------------------------ copiar */
+document.querySelectorAll('.code').forEach(box => {
+  const pre = box.querySelector('pre');
+  if (!pre) return;
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.type = 'button';
+  btn.textContent = 'copiar';
+  btn.setAttribute('aria-label', 'Copiar código');
+  btn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(pre.innerText);
+      btn.textContent = 'copiado!';
+    } catch (e) {
+      btn.textContent = 'falhou';
+    }
+    setTimeout(() => { btn.textContent = 'copiar'; }, 1500);
+  });
+  box.appendChild(btn);
+});
+
+/* --------------------------------------------------- índice ativo (scroll) */
+const links = [...document.querySelectorAll('#toc a')];
+const targets = links
+  .map(a => document.querySelector(a.getAttribute('href')))
+  .filter(Boolean);
+
+function sync() {
+  let current = targets[0];
+  for (const t of targets) {
+    if (t.getBoundingClientRect().top <= 120) current = t;
+  }
+  links.forEach(a => a.setAttribute('aria-current', String(a.getAttribute('href') === '#' + current.id)));
+}
+let raf = 0;
+addEventListener('scroll', () => {
+  if (raf) return;
+  raf = requestAnimationFrame(() => { sync(); raf = 0; });
+}, { passive: true });
+sync();
+</script>
+</body>
+</html>
