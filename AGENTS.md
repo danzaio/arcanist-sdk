@@ -163,6 +163,22 @@ Convenção de retorno das **ações**: no `logic` devolvem `true` em sucesso ou
 | `HOST_STATE` | string | `"logic"` ou `"ui"`. |
 | `wait(ms)` | — | Atalho de `Engine.wait` (só dentro de `spawn`). |
 | `spawn(fn)` | id | Atalho de `Engine.spawn`. |
+| `game.key(nome)` | bool | A tecla está pressionada **agora**? Leitura **global** — funciona com o **jogo em foco** (não precisa da janela do bot focada). |
+| `game.key_pressed(nome)` | bool | A tecla **acabou de ser apertada** (borda). A leitura **consome** a borda (dispara 1x) — chame num lugar só, normalmente no `logic`. |
+
+Nomes de tecla aceitos: `f1`..`f12`, `insert`, `delete`, `home`, `end`, `pageup`, `pagedown`,
+`up`/`down`/`left`/`right`, `space`, `enter`, `escape`, `tab`, `a`..`z`, `0`..`9`. (Nome
+desconhecido devolve `false`; prefira F-keys pra não conflitar com digitação.)
+
+```lua
+-- hotkey: aperta F1 -> loota (com o JOGO em foco e ate com a UI do bot escondida)
+spawn(function()
+  while true do
+    wait(50)
+    if game.key_pressed("f1") then T.quickloot() end
+  end
+end)
+```
 
 ### 4.2 `sdk.engine` — leitura do jogo
 
@@ -176,6 +192,17 @@ local E = require("sdk.engine")
 | `E.creatures()` | lista (array) | itens com `id, name, x, y, z, dist, hp_pct, is_player, is_monster, is_npc, is_self, skull` |
 | `E.creature(id)` | tabela ou `nil` | procura o `id` na lista acima |
 | `E.target()` | inteiro | id do alvo atual; `0` = sem alvo |
+| `E.equipment()` | tabela | itens **equipados**, por slot — só os slots ocupados: `{helmet={slot="helmet",id=1234,count=1}, backpack={...}, ...}` |
+
+Slots do equipamento: `helmet`, `amulet`, `backpack`, `armor`, `right` (arma), `left` (escudo),
+`legs`, `boots`, `ring`, `ammo`. Slot vazio = ausente na tabela.
+
+```lua
+local eq = E.equipment()
+if eq and eq.helmet then
+  ui.text(("elmo: id %d (x%d)"):format(eq.helmet.id, eq.helmet.count))
+end
+```
 
 Observações:
 - `hp_pct` / `mana_pct` são 0..100.
@@ -539,9 +566,9 @@ end
 (um checkbox "mostrar UI do bot" que chama `ui.hide_host(false)`) — senão o usuário fica sem
 como chegar nas abas do bot. O `demo_ui` faz exatamente isso (checkbox + fica salvo).
 
-**Dica de layout:** o painel do pack é uma janela ImGui normal — clique nela pra trazer pra
-frente e arraste pela barra de título. Se ela ficar "disputando" com a janela do bot, é só
-esconder o host (acima): sobra só a tua janela na tela.
+**Dica de layout:** o painel do pack é uma janela ImGui normal — arraste pela barra de título.
+Os painéis do pack ficam **SEMPRE na frente** das abas do bot: clicar no host **não** os cobre
+(o host nunca sobe na frente deles). Quer a tela só com o teu painel? Esconda o host (acima).
 
 ### 6.6 Packs prontos (já vêm na pasta `scripts\` do pacote)
 

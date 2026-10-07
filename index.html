@@ -537,6 +537,13 @@ footer {
           <span class="desc">Id da criatura que você está atacando. <code>0</code> = sem alvo.</span>
         </div>
         <div class="sig">
+          <code>E.equipment()</code><span class="ret">tabela · nil, err</span>
+          <span class="desc">Itens <strong>equipados</strong> por slot (só os ocupados): <code>helmet</code>,
+          <code>amulet</code>, <code>backpack</code>, <code>armor</code>, <code>right</code> (arma),
+          <code>left</code> (escudo), <code>legs</code>, <code>boots</code>, <code>ring</code>,
+          <code>ammo</code>. Cada item tem <code>id</code> e <code>count</code> — ex.: <code>eq.helmet.id</code>.</span>
+        </div>
+        <div class="sig">
           <code>C.count_item(item_id)</code><span class="ret">number · nil, err</span>
           <span class="desc">Soma no inventário/containers abertos. <strong>Fail-closed</strong>: sem container aberto devolve erro, nunca <code>0</code>.</span>
         </div>
@@ -953,6 +960,24 @@ footer {
 <span class="c-kw">else</span>
   game.<span class="c-fn">log</span>(<span class="c-st">"abra a mochila: sem container aberto não dá pra contar"</span>)
 <span class="c-kw">end</span></code></pre></div>
+
+      <h3>Hotkey global (funciona com o jogo em foco)</h3>
+      <div class="code"><pre><code><span class="c-cm">-- no ui.frame: INSERT mostra/esconde a UI do bot, mesmo com o jogo em foco.</span>
+<span class="c-cm">-- game.key_pressed consome a borda (dispara 1x) — chame num lugar só.</span>
+<span class="c-kw">function</span> ui.<span class="c-fn">frame</span>()
+  <span class="c-kw">if</span> game.<span class="c-fn">key_pressed</span>(<span class="c-st">"insert"</span>) <span class="c-kw">then</span>
+    ui.<span class="c-fn">hide_host</span>(<span class="c-kw">not</span> ui.<span class="c-fn">host_hidden</span>())
+  <span class="c-kw">end</span>
+  ui.<span class="c-fn">window</span>(<span class="c-st">"Meu painel"</span>, <span class="c-kw">function</span>()
+    ui.<span class="c-fn">text</span>(<span class="c-st">"INSERT esconde/mostra as abas do bot"</span>)
+  <span class="c-kw">end</span>)
+<span class="c-kw">end</span></code></pre></div>
+      <p class="hint">Teclas: <code>f1</code>..<code>f12</code>, <code>insert</code>, <code>delete</code>,
+      <code>home</code>/<code>end</code>, <code>pageup</code>/<code>pagedown</code>, setas, <code>space</code>,
+      <code>enter</code>, <code>escape</code>, <code>tab</code>, <code>a</code>..<code>z</code>,
+      <code>0</code>..<code>9</code>. A leitura é <strong>global</strong>: funciona com o jogo em foco,
+      sem precisar do bot focado. <code>game.key(nome)</code> = está pressionada agora;
+      <code>game.key_pressed(nome)</code> = acabou de apertar (borda, consumida na leitura).</p>
     </section>
 
     <!-- ============ ERROS ================= -->
@@ -1023,6 +1048,12 @@ footer {
              gerado do catálogo</strong>, seletor de tema, esconder a UI do host, alertas e uma
              coroutine de feature.</p>
           <p class="hint">Comece por ele.</p>
+        </div>
+        <div class="card">
+          <h4>🧪 <code>1_painel/</code></h4>
+          <p>UI básica de produto que <strong>auto-carrega</strong> junto com o bot (teste em 1 clique):
+             cabeçalho com nome/nível, barras de HP/mana, tabela de stats, condições, botões de ação
+             e seletor de tema.</p>
         </div>
         <div class="card">
           <h4>🎁 <code>heal/</code> · <code>hud/</code> · <code>autoloot/</code> · <code>radar/</code></h4>
@@ -1291,7 +1322,10 @@ end</code></pre></div>
             <li>Config persistente por pack</li>
             <li>UI completa + 4 temas + toast</li>
             <li>Esconder a UI do bot (o painel do pack continua)</li>
+            <li>Painéis do pack <strong>sempre na frente</strong> das abas do host</li>
             <li>Janela sempre na frente do jogo (topmost)</li>
+            <li>Teclas e hotkeys <strong>globais</strong> (<code>game.key</code> — funciona com o jogo em foco)</li>
+            <li>Inventário equipado ao vivo (<code>E.equipment()</code>)</li>
           </ul>
         </div>
         <div class="card">
@@ -1311,6 +1345,7 @@ end</code></pre></div>
             <li>Teste ao vivo com personagem: leitura, andar multi-tile, evento, ataque, loot</li>
             <li>Persistência provada entre restarts</li>
             <li>07/10: dispatch seguro, <code>hide_host</code>, janela topmost e <code>H.set</code> do RTC verificados ao vivo</li>
+            <li>07/10: teclas (F1/F2/F3/INSERT/ESPAÇO) e inventário equipado verificados com personagem no jogo</li>
           </ul>
         </div>
       </div>
