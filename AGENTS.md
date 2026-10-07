@@ -412,6 +412,79 @@ function ui.frame() ... end   -- o host chama a cada quadro
 
 Temas: `"moonlight"` (default), `"eggplant"`, `"cyan"`, `"dark"`.
 
+#### `ui.raw` — layout fino (escape hatch do ImGui)
+
+Quando os widgets prontos não bastam (colocar coisa **lado a lado**, em **grade**, alinhar à
+direita, calcular posições), use `ui.raw.*`. Tudo em ImGui direto — e, como todo `ui.*`,
+**só funciona no estado `ui`** (dentro do `ui.frame`).
+
+```lua
+local R = ui.raw
+
+-- LAYOUT
+R.same_line([offset])          -- proximo item na MESMA linha (offset opcional em px)
+R.dummy(w, h)                  -- espaco em branco de tamanho fixo
+R.set_cursor_pos(x, y)         -- posiciona o cursor de desenho (x/y da janela)
+R.set_cursor_pos_x(v) · R.set_cursor_pos_y(v)
+R.get_cursor_pos()             -- -> x, y
+R.get_content_region_avail()   -- -> w, h (espaco livre na janela)
+R.get_window_size()            -- -> w, h
+R.get_window_pos()             -- -> x, y
+R.get_frame_height() · R.get_text_line_height()
+R.calc_text_size(texto)        -- -> w, h (pra centralizar/alinhar)
+R.set_next_item_width(w)       -- largura do PROXIMO widget (slider/input)
+R.begin_group() · R.end_group()
+R.indent([w]) · R.unindent([w])
+R.begin_child(id, w, h[, borda]) -> bool · R.end_child()   -- child COM tamanho (o ui.child é fixo)
+R.columns(n[, id[, borda]]) · R.next_column()              -- grade de N colunas (legado, simples)
+
+-- ESTILO pontual
+R.push_style_color("button", r, g, b[, a]) · R.pop_style_color([n])
+R.push_style_var("frame_padding", 8, 4) · R.pop_style_var([n])
+R.separator_text(t) · R.bullet_text(t) · R.label_text(l, t)
+
+-- JANELA (flags finas; nomes em string)
+R.set_next_window_pos(x, y[, cond]) · R.set_next_window_size(w, h[, cond])
+R.set_next_window_collapsed(b) · R.set_next_window_focus()
+R.begin_window(titulo[, {flags}]) -> bool · R.end_window()
+-- flags: "no_titlebar", "no_resize", "no_move", "no_scrollbar", "no_collapse",
+--        "always_auto_resize", "no_background", "no_saved_settings", "horizontal_scrollbar", ...
+-- cond: "always", "once", "first_use_ever", "appearing"
+
+-- WIDGETS a mais
+R.small_button(l) · R.invisible_button(id, w, h) · R.radio_button(l, ativo)
+R.slider_float(l, v, min, max) · R.drag_int(l, v[, step[, min[, max]]]) · R.drag_float(...)
+R.input_int(l, v) · R.color_edit4(l, r, g, b, a) -> r,g,b,a
+R.tree_node(l) · R.tree_node_ex(l, {flags}) · R.tree_pop()
+R.plot_lines(l, valores[, altura]) · R.plot_histogram(...)
+R.begin_list_box(l[, w, h]) -> bool · R.end_list_box()
+
+-- MENUS / POPUPS / TOOLTIPS
+R.begin_menu_bar()/end_menu_bar() · R.begin_menu(l)/end_menu() · R.menu_item(l)
+R.open_popup(id) · R.begin_popup(id)/end_popup() · R.begin_popup_context_item([id])
+R.begin_tooltip()/end_tooltip() · R.set_tooltip(t)
+R.is_item_hovered() · R.is_item_clicked() · R.get_item_rect_size() -> w,h
+```
+
+**Receita: grade 3x3 (o "D-pad" de waypoints)** — botões lado a lado, não empilhados:
+
+```lua
+R.columns(3, "##pad", false)
+local dirs = { "NW", "N", "NE", "W", "CENTER", "E", "SW", "S", "SE" }
+for i, d in ipairs(dirs) do
+  if ui.button(d) then escolha = d end
+  if i % 3 ~= 0 then R.next_column() end
+end
+R.columns(1)
+
+-- e um botao na DIREITA da linha:
+ui.button("esquerda")
+R.same_line(200)
+ui.button("direita")
+```
+
+Pack de exemplo rodando: `scripts/0_wpdemo/`.
+
 ### 4.16 `game.dbg` — pesquisa (não usar em produção)
 
 ```lua
