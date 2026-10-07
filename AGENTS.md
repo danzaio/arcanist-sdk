@@ -299,6 +299,7 @@ Também acessível como `sdk.schedule` (mesmas funções: `every`, `after`, `can
 | `Engine.on(nome, fn)` | id | Registra handler de um evento (§4.14). |
 | `Engine.onAny(fn)` | id | Handler de TODOS os eventos. |
 | `Engine.off(id)` | bool | Remove um handler. |
+| `Engine.help(name)` | — | Loga uma dica sobre o evento (os campos dependem do poller). |
 | `Engine.every(ms, fn)` | id | Timer repetitivo (roda no estado logic). |
 | `Engine.after(ms, fn)` | id | Timer de uma vez só. |
 | `Engine.cancel(id)` | bool | Cancela timer, coroutine ou handler pelo id. |
