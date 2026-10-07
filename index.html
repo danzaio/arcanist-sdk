@@ -544,6 +544,11 @@ footer {
           <code>ammo</code>. Cada item tem <code>id</code> e <code>count</code> — ex.: <code>eq.helmet.id</code>.</span>
         </div>
         <div class="sig">
+          <code>K.open()</code><span class="ret">lista · nil, err</span>
+          <span class="desc">Containers <strong>abertos</strong> (mochila, bps, depot): cada um com
+          <code>{id, name, capacity, items = {{slot, id, count}, ...}}</code>. Fail-closed: sem jogo devolve erro.</span>
+        </div>
+        <div class="sig">
           <code>C.count_item(item_id)</code><span class="ret">number · nil, err</span>
           <span class="desc">Soma no inventário/containers abertos. <strong>Fail-closed</strong>: sem container aberto devolve erro, nunca <code>0</code>.</span>
         </div>
@@ -1323,9 +1328,12 @@ end</code></pre></div>
             <li>UI completa + 4 temas + toast</li>
             <li>Esconder a UI do bot (o painel do pack continua)</li>
             <li>Painéis do pack <strong>sempre na frente</strong> das abas do host</li>
+            <li>Janela <strong>transparente</strong> + clique atravessa área vazia (overlay independente)</li>
             <li>Janela sempre na frente do jogo (topmost)</li>
             <li>Teclas e hotkeys <strong>globais</strong> (<code>game.key</code> — funciona com o jogo em foco)</li>
             <li>Inventário equipado ao vivo (<code>E.equipment()</code>)</li>
+            <li>Containers abertos (<code>K.open()</code>)</li>
+            <li>Watchdog de laço infinito + validação de argumentos</li>
           </ul>
         </div>
         <div class="card">

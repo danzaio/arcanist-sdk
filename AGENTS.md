@@ -287,7 +287,23 @@ C.route_load(path) / C.route_save(path) / C.route_clear()
 ```lua
 local K = require("sdk.containers")
 K.count_item(item_id)   -- quantos desse item você tem (inventário + abertos)
+
+-- Lista os containers ABERTOS (mochila, bp's abertas, depot) com os itens:
+local cs, err = K.open()
+if cs then
+  for _, c in ipairs(cs) do
+    game.log(("%s (id %d, cap %d) - %d itens"):format(c.name, c.id, c.capacity, #c.items))
+    for _, it in ipairs(c.items) do
+      -- it.slot, it.id, it.count
+    end
+  end
+else
+  game.log("abrir a mochila primeiro: " .. tostring(err))
+end
 ```
+
+`K.open()` devolve `lista` ou `nil, err` (fail-closed: sem jogo devolve erro). Cada container:
+`{id, name, capacity, items = {{slot, id, count}, ...}}`.
 
 ### 4.11 `sdk.shared` — memória entre os dois estados
 
@@ -570,6 +586,11 @@ como chegar nas abas do bot. O `demo_ui` faz exatamente isso (checkbox + fica sa
 Os painéis do pack ficam **SEMPRE na frente** das abas do bot: clicar no host **não** os cobre
 (o host nunca sobe na frente deles). Quer a tela só com o teu painel? Esconda o host (acima).
 
+**Janela transparente (build novo):** com o host escondido, o fundo da janela do bot é
+**transparente de verdade** — só os painéis do pack aparecem, o jogo/desktop fica visível atrás.
+E clique em área vazia (fora de qualquer painel) **atravessa pro jogo** (fim do missclick).
+Com o host visível nada muda (a UI do bot cobre tudo, como sempre).
+
 ### 6.6 Packs prontos (já vêm na pasta `scripts\` do pacote)
 
 São a base mais rápida que existe: **clique Carregar** na aba SDK Lua pra ver funcionando, ou
@@ -835,6 +856,8 @@ end
 | O botão não faz nada na hora | Ação no estado `ui` é **enfileirada** (não executa na hora). O erro real aparece no log como `[script] <ação> falhou`. |
 | Não sei qual pack está carregado | Aba **SDK Lua** — o pack marcado com `<- atual` é o que está rodando. |
 | Nada acontece e o log está limpo | Confira se o jogo está aberto **e logado** (o bot precisa do personagem em jogo). |
+| Script "travou" o bot | Watchdog (novo): laço infinito vira erro logado (`watchdog: script rodou mais de...`) — a thread do script não congela mais. |
+| Ação falhou com "fora do mapa" / "precisa ser > 0" | Validação de faixa (novo) — confira os argumentos da chamada (step 0..7, x/y 0..65535, z 0..15, ids > 0). |
 
 ---
 
