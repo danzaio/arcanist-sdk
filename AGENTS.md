@@ -483,7 +483,7 @@ R.same_line(200)
 ui.button("direita")
 ```
 
-Pack de exemplo rodando: `scripts/0_wpdemo/`.
+Pack de exemplo rodando: `scripts/demo_dpad/`.
 
 ### 4.16 `game.dbg` — pesquisa (não usar em produção)
 
