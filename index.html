@@ -795,7 +795,7 @@ footer {
             <tr><td>Seção</td><td><code>ui.collapsing(label, fn)</code></td><td>—</td></tr>
             <tr><td>Região</td><td><code>ui.child(id, fn)</code></td><td>—</td></tr>
             <tr><td>Tabela</td><td><code>ui.table(id, headers, linhas)</code></td><td>—</td></tr>
-            <tr><td>Esconder host</td><td><code>ui.hide_host(bool)</code> · <code>ui.host_hidden()</code></td><td><code>bool</code></td></tr>
+            <tr><td>ImGui direto</td><td><code>ui.columns</code> · <code>ui.same_line(px)</code> · <code>ui.begin_child(id,w,h)</code> · <code>ui.slider_float</code> · <code>ui.begin_window</code> · <code>ui.tree_node</code> · <code>ui.plot_lines</code> · ...</td><td>igual ImGui</td></tr>
             <tr><td>Tema</td><td><code>ui.theme(nome)</code> · <code>ui.themes()</code></td><td><code>bool</code> / lista</td></tr>
           </tbody>
         </table>
@@ -827,13 +827,7 @@ footer {
       <span class="c-kw">end</span>
     <span class="c-kw">end</span>)
 
-    <span class="c-cm">-- esconder a UI de debug do arcanist (sempre deixe um caminho de volta)</span>
-    ui.<span class="c-fn">separator</span>()
-    <span class="c-kw">local</span> h = ui.<span class="c-fn">checkbox</span>(<span class="c-st">"Esconder a UI do arcanist"</span>, ST.<span class="c-fn">get</span>(<span class="c-st">"hide"</span>) == <span class="c-kw">true</span>)
-    <span class="c-kw">if</span> h ~= (ST.<span class="c-fn">get</span>(<span class="c-st">"hide"</span>) == <span class="c-kw">true</span>) <span class="c-kw">then</span>
-      ST.<span class="c-fn">set</span>(<span class="c-st">"hide"</span>, h)
-      ui.<span class="c-fn">hide_host</span>(h)
-    <span class="c-kw">end</span>
+    <span class="c-cm">-- a UI do bot (abas) sai da frente SOZINHA quando o pack desenha janela</span>
   <span class="c-kw">end</span>)
 <span class="c-kw">end</span></code></pre></div>
 
@@ -845,20 +839,13 @@ footer {
       </div>
 
       <div class="note ok">
-        <p><strong>Esconder a UI do bot:</strong> <code>ui.hide_host(true)</code> esconde
-        <strong>só a janela do bot</strong> — os painéis do pack continuam desenhando (e ficam por
-        cima). Dá pra esconder já no carregamento do pack, e o teu painel precisa ter um controle
-        pra voltar:</p>
+        <p><strong>A UI do bot sai da frente sozinha:</strong> quando o teu pack desenha uma
+        janela, as abas do bot (Engine/Cavebot/Debug) <strong>desaparecem automaticamente</strong> —
+        o usuário final vê só o teu painel. Não existe <code>hide_host</code>: não precisa de
+        nenhuma chamada no script. Se o pack não desenhar nada, as abas voltam (você nunca fica
+        sem acesso). <strong>INSERT</strong> (tecla global) alterna a UI do bot quando você (dev)
+        for carregar/recarregar packs ou usar o Debug.</p>
       </div>
-      <div class="code"><pre><code><span class="c-cm">-- no carregamento do pack (estado ui): o usuário final só vê a TUA janela</span>
-<span class="c-kw">if</span> HOST_STATE == <span class="c-st">"ui"</span> <span class="c-kw">then</span>
-  ui.<span class="c-fn">hide_host</span>(<span class="c-kw">true</span>)
-<span class="c-kw">end</span>
-
-<span class="c-cm">-- e um caminho de volta no TEU painel:</span>
-<span class="c-kw">if</span> ui.<span class="c-fn">button</span>(<span class="c-st">"mostrar UI do bot"</span>) <span class="c-kw">then</span>
-  ui.<span class="c-fn">hide_host</span>(<span class="c-kw">false</span>)
-<span class="c-kw">end</span></code></pre></div>
     </section>
 
     <!-- ============ TEMAS ================= -->
@@ -967,14 +954,16 @@ footer {
 <span class="c-kw">end</span></code></pre></div>
 
       <h3>Hotkey global (funciona com o jogo em foco)</h3>
-      <div class="code"><pre><code><span class="c-cm">-- no ui.frame: INSERT mostra/esconde a UI do bot, mesmo com o jogo em foco.</span>
+      <div class="code"><pre><code><span class="c-cm">-- no ui.frame: F1 liga/desliga o auto-loot, mesmo com o jogo em foco.</span>
 <span class="c-cm">-- game.key_pressed consome a borda (dispara 1x) — chame num lugar só.</span>
 <span class="c-kw">function</span> ui.<span class="c-fn">frame</span>()
-  <span class="c-kw">if</span> game.<span class="c-fn">key_pressed</span>(<span class="c-st">"insert"</span>) <span class="c-kw">then</span>
-    ui.<span class="c-fn">hide_host</span>(<span class="c-kw">not</span> ui.<span class="c-fn">host_hidden</span>())
+  <span class="c-kw">if</span> game.<span class="c-fn">key_pressed</span>(<span class="c-st">"f1"</span>) <span class="c-kw">then</span>
+    <span class="c-kw">local</span> on = <span class="c-kw">not</span> (ST.<span class="c-fn">get</span>(<span class="c-st">"loot"</span>) == <span class="c-kw">true</span>)
+    ST.<span class="c-fn">set</span>(<span class="c-st">"loot"</span>, on)
+    game.<span class="c-fn">alert</span>(on <span class="c-kw">and</span> <span class="c-st">"Auto-loot ON"</span> <span class="c-kw">or</span> <span class="c-st">"Auto-loot OFF"</span>)
   <span class="c-kw">end</span>
   ui.<span class="c-fn">window</span>(<span class="c-st">"Meu painel"</span>, <span class="c-kw">function</span>()
-    ui.<span class="c-fn">text</span>(<span class="c-st">"INSERT esconde/mostra as abas do bot"</span>)
+    ui.<span class="c-fn">text</span>(<span class="c-st">"F1 liga/desliga o auto-loot · INSERT mostra/esconde a UI do bot"</span>)
   <span class="c-kw">end</span>)
 <span class="c-kw">end</span></code></pre></div>
       <p class="hint">Teclas: <code>f1</code>..<code>f12</code>, <code>insert</code>, <code>delete</code>,
@@ -1326,9 +1315,8 @@ end</code></pre></div>
             <li>Coroutines com <code>wait</code></li>
             <li>Config persistente por pack</li>
             <li>UI completa + 4 temas + toast</li>
-            <li>Esconder a UI do bot (o painel do pack continua)</li>
-            <li>UI <strong>raw do ImGui</strong> (<code>ui.raw</code>): grade, lado a lado, alinhamento fino</li>
-            <li>Painéis do pack <strong>sempre na frente</strong> das abas do host</li>
+            <li>A UI do bot <strong>sai da frente sozinha</strong> quando o pack desenha (INSERT traz de volta)</li>
+            <li><strong>ImGui direto</strong> na mesma tabela <code>ui</code>: grade, lado a lado, alinhamento fino</li>
             <li>Janela <strong>transparente</strong> + clique atravessa área vazia (overlay independente)</li>
             <li>Janela sempre na frente do jogo (topmost)</li>
             <li>Teclas e hotkeys <strong>globais</strong> (<code>game.key</code> — funciona com o jogo em foco)</li>
@@ -1352,7 +1340,8 @@ end</code></pre></div>
             <li>Suíte headless (host, ações, UI, storage) — 100% verde</li>
             <li>Teste ao vivo com personagem: leitura, andar multi-tile, evento, ataque, loot</li>
             <li>Persistência provada entre restarts</li>
-            <li>07/10: dispatch seguro, <code>hide_host</code>, janela topmost e <code>H.set</code> do RTC verificados ao vivo</li>
+            <li>07/10: overlay simplificado — <code>ui.*</code> plano (sem <code>ui.raw</code>), UI do bot sai da frente sozinha, clique atravessa área vazia</li>
+            <li>07/10: dispatch seguro, janela topmost e <code>H.set</code> do RTC verificados ao vivo</li>
             <li>07/10: teclas (F1/F2/F3/INSERT/ESPAÇO) e inventário equipado verificados com personagem no jogo</li>
           </ul>
         </div>

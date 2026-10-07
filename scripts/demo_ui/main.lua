@@ -2,7 +2,7 @@
 -- scripts/demo_ui/main.lua — EXEMPLO DE UI/UX PRO USUARIO FINAL
 --
 -- Este pack e' o ponto de partida do socio. Ele mostra, junto e funcionando:
---   1. game.overlay.hide_host(true)   -> esconde a UI de debug do arcanist
+--   1. a UI do bot (abas) sai da frente SOZINHA quando o pack desenha janela
 --   2. sdk.storage                    -> as escolhas do usuario SOBREVIVEM ao restart
 --   3. H.list() + H.get/H.set         -> painel de config do RTC GERADO DO CATALOGO
 --   4. ui.table / collapsing / child  -> layout de produto sem boilerplate
@@ -28,7 +28,6 @@ local cfg = {
   auto_heal = (ST.get("auto_heal") == true),
   heal_pct  = tonumber(ST.get("heal_pct")) or 60,
   loot_ms   = tonumber(ST.get("loot_ms")) or 2000,
-  hide_host = (ST.get("hide_host") == true),
 }
 
 -- Prova viva de persistencia: cada carregamento incrementa o contador no DISCO.
@@ -179,15 +178,6 @@ function ui.frame()
       end
     end)
 
-    -- (f) esconder a NOSSA UI de debug (o usuario final so ve a do socio)
-    ui.separator()
-    local esconder = ui.checkbox("Esconder a UI do arcanist", cfg.hide_host)
-    if esconder ~= cfg.hide_host then
-      cfg.hide_host = esconder
-      ST.set("hide_host", esconder)
-      ui.hide_host(esconder)
-    end
-
     -- (f) rodape: quantas vezes o bot ja' carregou (persistido em disco)
     ui.text("sessoes (persistido): " .. tostring(S.get("sessoes") or "?"))
 
@@ -198,10 +188,7 @@ function ui.frame()
   end)
 end
 
--- Aplica o "esconder" e o tema que o usuario tinha salvo (roda quando a UI carrega)
-if cfg.hide_host then
-  ui.hide_host(true)
-end
+-- Aplica o tema que o usuario tinha salvo (roda quando a UI carrega)
 if ST.get("tema") then
   ui.theme(ST.get("tema"))
 end

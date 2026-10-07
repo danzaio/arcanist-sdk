@@ -391,7 +391,7 @@ function ui.frame() ... end   -- o host chama a cada quadro
 | `ui.text_wrapped(...)` | — | Texto com quebra de linha. |
 | `ui.bullet(...)` | — | Item com marcador. |
 | `ui.separator()` | — | Linha divisória. |
-| `ui.same_line()` | — | Próximo widget na mesma linha. |
+| `ui.same_line([offset])` | — | Próximo widget na mesma linha (offset opcional em px). |
 | `ui.spacing()` | — | Espaço vertical. |
 | `ui.tooltip(...)` | — | Tooltip do último widget. |
 | `ui.color_text(r, g, b, texto)` | — | Texto colorido (r,g,b floats 0..1). |
@@ -405,81 +405,77 @@ function ui.frame() ... end   -- o host chama a cada quadro
 | `ui.child(id, fn)` | — | Área com scroll. |
 | `ui.collapsing(label, fn)` | — | Seção que abre/fecha. |
 | `ui.table(id, headers, rows)` | — | Tabela pronta: `headers` = lista de strings; `rows` = lista de listas. |
-| `ui.hide_host([bool])` | bool | Esconde a UI de debug do bot (default `true`). Retorna o estado. |
-| `ui.host_hidden()` | bool | A UI do bot está escondida? |
 | `ui.theme(nome)` | — | Troca o tema (erro se nome inválido). |
 | `ui.themes()` | lista | Nomes válidos dos temas. |
 
 Temas: `"moonlight"` (default), `"eggplant"`, `"cyan"`, `"dark"`.
 
-#### `ui.raw` — layout fino (escape hatch do ImGui)
+#### ImGui direto (na MESMA tabela `ui`)
 
 Quando os widgets prontos não bastam (colocar coisa **lado a lado**, em **grade**, alinhar à
-direita, calcular posições), use `ui.raw.*`. Tudo em ImGui direto — e, como todo `ui.*`,
-**só funciona no estado `ui`** (dentro do `ui.frame`).
+direita, calcular posições), chame o ImGui direto — **é tudo na mesma tabela `ui`** (não existe
+`ui.raw`). Como todo `ui.*`, **só funciona no estado `ui`** (dentro do `ui.frame`).
 
 ```lua
-local R = ui.raw
-
 -- LAYOUT
-R.same_line([offset])          -- proximo item na MESMA linha (offset opcional em px)
-R.dummy(w, h)                  -- espaco em branco de tamanho fixo
-R.set_cursor_pos(x, y)         -- posiciona o cursor de desenho (x/y da janela)
-R.set_cursor_pos_x(v) · R.set_cursor_pos_y(v)
-R.get_cursor_pos()             -- -> x, y
-R.get_content_region_avail()   -- -> w, h (espaco livre na janela)
-R.get_window_size()            -- -> w, h
-R.get_window_pos()             -- -> x, y
-R.get_frame_height() · R.get_text_line_height()
-R.calc_text_size(texto)        -- -> w, h (pra centralizar/alinhar)
-R.set_next_item_width(w)       -- largura do PROXIMO widget (slider/input)
-R.begin_group() · R.end_group()
-R.indent([w]) · R.unindent([w])
-R.begin_child(id, w, h[, borda]) -> bool · R.end_child()   -- child COM tamanho (o ui.child é fixo)
-R.columns(n[, id[, borda]]) · R.next_column()              -- grade de N colunas (legado, simples)
+ui.same_line([offset])         -- proximo item na MESMA linha (offset opcional em px)
+ui.dummy(w, h)                 -- espaco em branco de tamanho fixo
+ui.set_cursor_pos(x, y)        -- posiciona o cursor de desenho (x/y da janela)
+ui.set_cursor_pos_x(v) · ui.set_cursor_pos_y(v)
+ui.get_cursor_pos()            -- -> x, y
+ui.get_content_region_avail()  -- -> w, h (espaco livre na janela)
+ui.get_window_size()           -- -> w, h
+ui.get_window_pos()            -- -> x, y
+ui.get_frame_height() · ui.get_text_line_height()
+ui.calc_text_size(texto)       -- -> w, h (pra centralizar/alinhar)
+ui.set_next_item_width(w)      -- largura do PROXIMO widget (slider/input)
+ui.begin_group() · ui.end_group()
+ui.indent([w]) · ui.unindent([w])
+ui.begin_child(id, w, h[, borda]) -> bool · ui.end_child()   -- child COM tamanho (o ui.child é fixo)
+ui.columns(n[, id[, borda]]) · ui.next_column()              -- grade de N colunas
 
 -- ESTILO pontual
-R.push_style_color("button", r, g, b[, a]) · R.pop_style_color([n])
-R.push_style_var("frame_padding", 8, 4) · R.pop_style_var([n])
-R.separator_text(t) · R.bullet_text(t) · R.label_text(l, t)
+ui.push_style_color("button", r, g, b[, a]) · ui.pop_style_color([n])
+ui.push_style_var("frame_padding", 8, 4) · ui.pop_style_var([n])
+ui.separator_text(t) · ui.bullet_text(t) · ui.label_text(l, t)
 
 -- JANELA (flags finas; nomes em string)
-R.set_next_window_pos(x, y[, cond]) · R.set_next_window_size(w, h[, cond])
-R.set_next_window_collapsed(b) · R.set_next_window_focus()
-R.begin_window(titulo[, {flags}]) -> bool · R.end_window()
+ui.set_next_window_pos(x, y[, cond]) · ui.set_next_window_size(w, h[, cond])
+ui.set_next_window_collapsed(b) · ui.set_next_window_focus()
+ui.begin_window(titulo[, {flags}]) -> bool · ui.end_window()
 -- flags: "no_titlebar", "no_resize", "no_move", "no_scrollbar", "no_collapse",
 --        "always_auto_resize", "no_background", "no_saved_settings", "horizontal_scrollbar", ...
 -- cond: "always", "once", "first_use_ever", "appearing"
 
 -- WIDGETS a mais
-R.small_button(l) · R.invisible_button(id, w, h) · R.radio_button(l, ativo)
-R.slider_float(l, v, min, max) · R.drag_int(l, v[, step[, min[, max]]]) · R.drag_float(...)
-R.input_int(l, v) · R.color_edit4(l, r, g, b, a) -> r,g,b,a
-R.tree_node(l) · R.tree_node_ex(l, {flags}) · R.tree_pop()
-R.plot_lines(l, valores[, altura]) · R.plot_histogram(...)
-R.begin_list_box(l[, w, h]) -> bool · R.end_list_box()
+ui.small_button(l) · ui.invisible_button(id, w, h) · ui.radio_button(l, ativo)
+ui.slider_float(l, v, min, max) · ui.drag_int(l, v[, step[, min[, max]]]) · ui.drag_float(...)
+ui.input_int(l, v) · ui.color_edit4(l, r, g, b, a) -> r,g,b,a
+ui.tree_node(l) · ui.tree_node_ex(l, {flags}) · ui.tree_pop()
+ui.plot_lines(l, valores[, altura]) · ui.plot_histogram(...)
+ui.begin_list_box(l[, w, h]) -> bool · ui.end_list_box()
 
 -- MENUS / POPUPS / TOOLTIPS
-R.begin_menu_bar()/end_menu_bar() · R.begin_menu(l)/end_menu() · R.menu_item(l)
-R.open_popup(id) · R.begin_popup(id)/end_popup() · R.begin_popup_context_item([id])
-R.begin_tooltip()/end_tooltip() · R.set_tooltip(t)
-R.is_item_hovered() · R.is_item_clicked() · R.get_item_rect_size() -> w,h
+ui.begin_menu_bar()/end_menu_bar() · ui.begin_menu(l)/end_menu() · ui.menu_item(l)
+ui.open_popup(id) · ui.begin_popup(id)/end_popup() · ui.begin_popup_context_item([id])
+ui.begin_tooltip()/end_tooltip() · ui.set_tooltip(t)
+ui.is_item_hovered() · ui.is_item_clicked() · ui.get_item_rect_size() -> w,h
 ```
 
 **Receita: grade 3x3 (o "D-pad" de waypoints)** — botões lado a lado, não empilhados:
 
 ```lua
-R.columns(3, "##pad", false)
+ui.columns(3, "##pad", false)
 local dirs = { "NW", "N", "NE", "W", "CENTER", "E", "SW", "S", "SE" }
 for i, d in ipairs(dirs) do
   if ui.button(d) then escolha = d end
-  if i % 3 ~= 0 then R.next_column() end
+  if i % 3 ~= 0 then ui.next_column() end
 end
-R.columns(1)
+ui.columns(1)
 
 -- e um botao na DIREITA da linha:
 ui.button("esquerda")
-R.same_line(200)
+ui.same_line(200)
 ui.button("direita")
 ```
 
@@ -514,7 +510,6 @@ local cfg = {
   auto_loot = (ST.get("auto_loot") == true),
   heal_pct  = tonumber(ST.get("heal_pct")) or 60,
   tema      = ST.get("tema") or "moonlight",
-  hide_host = (ST.get("hide_host") == true),
 }
 
 -- 2) ESCRITAS DE LOAD só no logic (o main.lua roda 2x!)
@@ -571,8 +566,7 @@ function ui.frame()
   end)
 end
 
--- 6) aplica o que o usuário já tinha escolhido
-if cfg.hide_host then ui.hide_host(true) end
+-- 6) aplica o tema que o usuário já tinha escolhido
 ui.theme(cfg.tema)
 ```
 
@@ -639,30 +633,24 @@ end)
 ui.text("estado: " .. tostring(S.get("estado") or "-"))
 ```
 
-### 6.5 Esconder a UI do bot (entrega pro usuário final)
+### 6.5 A UI do bot sai da frente sozinha (entrega pro usuário final)
 
-```lua
--- (a) num controle do TEU painel (o usuário liga/desliga quando quiser):
-ui.hide_host(true)
+Não existe `hide_host` — **quando o teu pack desenha uma janela, as abas do bot
+(Engine/Cavebot/Debug) desaparecem automaticamente**. O usuário final vê SÓ o teu painel,
+flutuando sobre o jogo. Não precisa de nenhuma chamada no script.
 
--- (b) JÁ NO CARREGAMENTO do pack (o usuário nunca vê a UI do bot):
-if HOST_STATE == "ui" then
-  ui.hide_host(true)
-end
-```
+Se o teu pack não desenhar nada (pack sem UI, ou erro no `ui.frame`), o bot mostra as abas de
+novo — você nunca fica sem acesso.
 
-**IMPORTANTE:** se você esconder a UI do bot, o **TEU painel precisa ter como trazer de volta**
-(um checkbox "mostrar UI do bot" que chama `ui.hide_host(false)`) — senão o usuário fica sem
-como chegar nas abas do bot. O `demo_ui` faz exatamente isso (checkbox + fica salvo).
+**INSERT** (tecla global) alterna a UI do bot de volta — é a tua porta pra carregar/recarregar
+packs na aba **SDK Lua** e usar o **Debug**.
 
-**Dica de layout:** o painel do pack é uma janela ImGui normal — arraste pela barra de título.
-Os painéis do pack ficam **SEMPRE na frente** das abas do bot: clicar no host **não** os cobre
-(o host nunca sobe na frente deles). Quer a tela só com o teu painel? Esconda o host (acima).
+**Dica de layout:** o painel do pack é uma janela ImGui normal — arraste pela barra de título e
+redimensione pelas bordas (posição/tamanho ficam salvos).
 
-**Janela transparente (build novo):** com o host escondido, o fundo da janela do bot é
-**transparente de verdade** — só os painéis do pack aparecem, o jogo/desktop fica visível atrás.
-E clique em área vazia (fora de qualquer painel) **atravessa pro jogo** (fim do missclick).
-Com o host visível nada muda (a UI do bot cobre tudo, como sempre).
+**Overlay transparente:** a janela do bot é uma camada transparente que abraça os teus painéis —
+clique em área vazia (fora de qualquer widget) **atravessa pro jogo** (fim do missclick);
+clicar/arrastar num painel continua normal. A janela fica sempre na frente do jogo.
 
 ### 6.6 Packs prontos (já vêm na pasta `scripts\` do pacote)
 
@@ -944,7 +932,7 @@ end
 - [ ] Nenhuma ação disparada do estado `ui`.
 - [ ] `wait` só dentro de `spawn`.
 - [ ] Toggles/config sincronizam entre os estados (o loop do `logic` lê `ST.get`/`S.get`).
-- [ ] Se é pack de produto: `ui.hide_host(true)` aplicado e tema salvo.
+- [ ] Se é pack de produto: tema salvo (a UI do bot some sozinha quando o pack desenha).
 - [ ] Testado com o jogo aberto: Carregar → usar → Reload → conferir `arcanist.log`.
 
 ---
@@ -955,7 +943,7 @@ No pacote (ao lado do exe):
 
 | Pack | O que mostra |
 |---|---|
-| `scripts/demo_ui/` | **O MODELO de produto** — stats, toggles persistidos, painel do RTC, tema, hide_host, alertas, coroutine. Comece por ele. |
+| `scripts/demo_ui/` | **O MODELO de produto** — stats, toggles persistidos, painel do RTC, tema, alertas, coroutine. Comece por ele. |
 | `scripts/heal/` | **Pack pronto:** cura automática (liga/desliga, magia e % salvos). |
 | `scripts/hud/` | **Pack pronto:** painel de stats (HP, mana, cap, xp, condições). |
 | `scripts/autoloot/` | **Pack pronto:** auto-loot com botões. |

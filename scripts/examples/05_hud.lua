@@ -1,14 +1,11 @@
--- 05_hud.lua — HUD minimalista: esconde a UI do arcanist e mostra SO um quadrinho.
+-- 05_hud.lua — HUD minimalista: so o teu quadrinho, sem a UI do bot.
 --
--- Este e' o padrao "produto": o usuario final nao ve a nossa UI de debug, so a sua.
--- O botao "Mostrar arcanist" traz a UI do host de volta (importante: sem uma saida
--- de emergencia, esconder o host deixa o usuario sem acesso as abas do bot).
+-- Este e' o padrao "produto": a UI do bot (abas) sai da frente SOZINHA quando o
+-- pack desenha uma janela. INSERT traz ela de volta quando quiser (gerenciar
+-- packs/debug) — nao precisa de nenhuma chamada no script.
 
 local E  = require("sdk.engine")
-local ST = require("sdk.storage")
 local ui = game.overlay
-
-local escondido = (ST.get("hud_host_escondido") == true)
 
 function ui.frame()
   ui.window("HUD", function()
@@ -20,17 +17,5 @@ function ui.frame()
     else
       ui.text("sem personagem")
     end
-
-    ui.separator()
-    local novo = ui.checkbox("Esconder UI do arcanist", escondido)
-    if novo ~= escondido then
-      escondido = novo
-      ST.set("hud_host_escondido", novo)
-      ui.hide_host(novo)
-    end
   end)
-end
-
-if escondido then
-  ui.hide_host(true)
 end

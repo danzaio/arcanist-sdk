@@ -54,19 +54,15 @@ function ui.frame()
 end
 ```
 
-**Esconder a nossa UI de debug** (o usuário final só vê a sua):
-
-```lua
-ui.hide_host(true)          -- esconde a janela do arcanist
-ui.host_hidden()            -- true se está escondida
-```
-
-> ⚠️ Deixe sempre um jeito de voltar (um checkbox na SUA janela) — senão o usuário fica
-> sem acesso às abas do bot.
+**A UI do bot sai da frente sozinha:** quando o teu pack desenha uma janela, as abas do bot
+(Engine/Cavebot/Debug) desaparecem — o usuário final vê SÓ o teu painel. `INSERT` traz elas
+de volta quando você (dev) precisar carregar/recarregar packs ou usar o Debug.
 
 Widgets: `window`, `text`, `text_wrapped`, `bullet`, `separator`, `same_line`, `spacing`,
 `tooltip`, `color_text`, `progress`, `button`, `checkbox`, `input`, `slider`, `combo`,
-`selectable`, `collapsing`, `child`, `table`, `hide_host`, `host_hidden`.
+`selectable`, `collapsing`, `child`, `table` — e ImGui direto na MESMA tabela (`columns`,
+`set_cursor_pos`, `begin_child`, `begin_window`, `slider_float`, `drag_int`, `tree_node`,
+`plot_lines`, `menu_item`, popups/tooltips...). Exemplo: `scripts/demo_dpad`.
 
 ## Configurando o auto do RTC (helper)
 
