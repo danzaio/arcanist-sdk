@@ -226,6 +226,7 @@ local L = require("sdk.localplayer")
 | `L.yell(texto)` | string | Grito (modo 3, a tela inteira ouve). |
 | `L.stop()` | — | Cancela o andar. |
 | `L.attack(id)` | creature id | Ataca; `0` cancela o ataque. |
+| `L.fight_modes(fight, chase, safe)` | 1..3, 0..1, 0..1 | Modos de luta: `fight` 1=offensive/2=balanced/3=defensive, `chase` 0=parado/1=seguindo, `safe` 0/1. Ex: parado = `L.fight_modes(2, 0, 0)`, seguindo = `L.fight_modes(2, 1, 0)`. |
 | `L.use_item(cid, slot, item_id)` | — | Usa item de um container ABERTO (`cid` 0 = primeira janela; os cids vêm do `K.open()`). |
 | `L.use_at(x, y, z, item_id)` | — | Usa item num tile. No CORPO: `(65535, slot, 0)` — ex: mochila equipada = `L.use_at(65535, 3, 0, id)`. |
 | `L.use_ground(x, y, z)` | — | Usa o item DE CIMA do tile sem saber o id (pra waypoint com campo vazio). |
@@ -298,6 +299,8 @@ local K = require("sdk.containers")
 K.count_item(item_id)   -- quantos desse item você tem (inventário + abertos)
 K.open()                -- containers ABERTOS (mochila, bps abertas, depot) com os itens
 K.list()                -- apelido do open() (mesma coisa)
+K.close(cid)            -- fecha UM container
+K.up(cid)               -- sobe um nivel (bp interna -> pai)
 
 -- Lista os containers ABERTOS (mochila, bp's abertas, depot) com os itens:
 local cs, err = K.open()
@@ -315,6 +318,11 @@ end
 
 `K.open()` devolve `lista` ou `nil, err` (fail-closed: sem jogo devolve erro). Cada container:
 `{id, name, capacity, items = {{slot, id, count}, ...}}`.
+
+```lua
+K.close(cid)  -- fecha UM container (0x87)
+K.up(cid)     -- sobe um nivel (0x88): da bp interna volta pra pai, do depot volta pro locker
+```
 
 ### 4.11 `sdk.shared` — memória entre os dois estados
 
