@@ -228,6 +228,8 @@ local L = require("sdk.localplayer")
 | `L.pm(nome, texto)` | nome 1..31 letras | Mensagem privada pra um jogador. |
 | `L.stop()` | — | Cancela o andar. |
 | `L.attack(id)` | creature id | Ataca; `0` cancela o ataque. |
+| `L.look(x, y, z)` | — | Olha o objeto de cima do tile (texto "You see..." no chat). |
+| `L.turn(dir)` | 0..3 | Vira sem andar: 0=N, 1=E, 2=S, 3=W. |
 | `L.fight_modes(fight, chase, safe)` | 1..3, 0..1, 0..1 | Modos de luta: `fight` 1=offensive/2=balanced/3=defensive, `chase` 0=parado/1=seguindo, `safe` 0/1. Ex: parado = `L.fight_modes(2, 0, 0)`, seguindo = `L.fight_modes(2, 1, 0)`. |
 | `L.use_item(cid, slot, item_id)` | — | Usa item de um container ABERTO (`cid` 0 = primeira janela; os cids vêm do `K.open()`). |
 | `L.use_at(x, y, z, item_id)` | — | Usa item num tile. No CORPO: `(65535, slot, 0)` — ex: mochila equipada = `L.use_at(65535, 3, 0, id)`. |
