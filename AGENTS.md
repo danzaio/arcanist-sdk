@@ -224,6 +224,8 @@ local L = require("sdk.localplayer")
 | `L.say(texto)` | string | Fala no chat (ex: `"exura"`). |
 | `L.whisper(texto)` | string | Sussurro (modo 2, só quem tá colado ouve). |
 | `L.yell(texto)` | string | Grito (modo 3, a tela inteira ouve). |
+| `L.channel(id, texto)` | id 0..65535 | Fala num canal aberto (party, guild...). |
+| `L.pm(nome, texto)` | nome 1..31 letras | Mensagem privada pra um jogador. |
 | `L.stop()` | — | Cancela o andar. |
 | `L.attack(id)` | creature id | Ataca; `0` cancela o ataque. |
 | `L.fight_modes(fight, chase, safe)` | 1..3, 0..1, 0..1 | Modos de luta: `fight` 1=offensive/2=balanced/3=defensive, `chase` 0=parado/1=seguindo, `safe` 0/1. Ex: parado = `L.fight_modes(2, 0, 0)`, seguindo = `L.fight_modes(2, 1, 0)`. |
