@@ -227,6 +227,8 @@ local L = require("sdk.localplayer")
 | `L.use_item(cid, slot, item_id)` | — | Usa item de um container ABERTO (`cid` 0 = primeira janela; os cids vêm do `K.open()`). |
 | `L.use_at(x, y, z, item_id)` | — | Usa item num tile. No CORPO: `(65535, slot, 0)` — ex: mochila equipada = `L.use_at(65535, 3, 0, id)`. |
 | `L.use_ground(x, y, z)` | — | Usa o item DE CIMA do tile sem saber o id (pra waypoint com campo vazio). |
+| `L.use_tool(item_id)` | — | Usa ferramenta do inventário via hotkey (corda 3003, pá, facão...). Vale mesmo com a bp fechada. |
+| `L.use_on(item_id, x, y, z)` | — | Usa a ferramenta COM MIRA no objeto do tile (chave na porta, corda no buraco, pá no monte). |
 | `L.move_item(from_cid, from_slot, to_cid, to_slot, item_id[, count])` | `count` default 1 | Move item entre containers. |
 | `L.close_all()` | — | Fecha todas as janelas. |
 
