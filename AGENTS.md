@@ -224,11 +224,11 @@ local L = require("sdk.localplayer")
 | `L.say(texto)` | string | Fala no chat (ex: `"exura"`). |
 | `L.whisper(texto)` | string | Sussurro (modo 2, só quem tá colado ouve). |
 | `L.yell(texto)` | string | Grito (modo 3, a tela inteira ouve). |
-| `L.npc(texto)` | string | Fala no diálogo do NPC (modo 11; abre com `say "hi"` antes). |
-| `L.channel(id, texto)` | id 0..65535 | Fala num canal aberto (party, guild...). |
+| `L.npc(texto)` | string | Fala no diálogo do NPC (modo 11; abre com `say "hi"` antes). || `L.channel(id, texto)` | id 0..65535 | Fala num canal aberto (party, guild...). |
 | `L.pm(nome, texto)` | nome 1..31 letras | Mensagem privada pra um jogador. |
 | `L.stop()` | — | Cancela o andar. |
 | `L.attack(id)` | creature id | Ataca; `0` cancela o ataque. |
+| `L.follow(id)` | creature id | Segue a criatura (0xA2). |
 | `L.look(x, y, z)` | — | Olha o objeto de cima do tile (texto "You see..." no chat). |
 | `L.turn(dir)` | 0..3 | Vira sem andar: 0=N, 1=E, 2=S, 3=W. |
 | `L.browse(x, y, z)` | — | Pede os bytes do tile ao servidor (resposta chega via update de tile; `true` = pacote aceito, não "janela abriu"). |
@@ -309,6 +309,7 @@ K.open()                -- containers ABERTOS (mochila, bps abertas, depot) com 
 K.list()                -- apelido do open() (mesma coisa)
 K.close(cid)            -- fecha UM container
 K.up(cid)               -- sobe um nivel (bp interna -> pai)
+K.seek(cid, index)      -- pagina do container a partir de index (container grande)
 
 -- Lista os containers ABERTOS (mochila, bp's abertas, depot) com os itens:
 local cs, err = K.open()
@@ -330,6 +331,7 @@ end
 ```lua
 K.close(cid)  -- fecha UM container (0x87)
 K.up(cid)     -- sobe um nivel (0x88): da bp interna volta pra pai, do depot volta pro locker
+K.seek(cid, index)  -- pagina do container a partir de index (0xCC; true = aceito)
 ```
 
 ### 4.11 `sdk.shared` — memória entre os dois estados
