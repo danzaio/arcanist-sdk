@@ -237,7 +237,7 @@ local L = require("sdk.localplayer")
 | `L.fight_modes(fight, chase, safe)` | 1..3, 0..1, 0..1 | Modos de luta: `fight` 1=offensive/2=balanced/3=defensive, `chase` 0=parado/1=seguindo, `safe` 0/1. Ex: parado = `L.fight_modes(2, 0, 0)`, seguindo = `L.fight_modes(2, 1, 0)`. |
 | `L.use_item(cid, slot, item_id)` | — | Usa item de um container ABERTO (`cid` 0 = primeira janela; os cids vêm do `K.open()`). |
 | `L.use_at(x, y, z, item_id)` | — | Usa item num tile. No CORPO: `(65535, slot, 0)` — ex: mochila equipada = `L.use_at(65535, 3, 0, id)`. |
-| `L.use_ground(x, y, z[, n])` | `n` default 0 | Usa o n-ésimo ITEM de baixo pra cima (0 = base: escada sobe mesmo com item em cima). |
+| `L.use_ground(x, y, z[, n])` | `n` default 1 | Usa o n-ésimo ITEM (0 = chão, 1 = escada em geral). |
 | `L.use_tool(item_id)` | — | Usa ferramenta do inventário via hotkey (corda 3003, pá, facão...). Vale mesmo com a bp fechada. |
 | `L.use_on(item_id, x, y, z)` | — | Usa a ferramenta COM MIRA no objeto do tile (chave na porta, corda no buraco, pá no monte). |
 | `L.move_item(from_cid, from_slot, to_cid, to_slot, item_id[, count])` | `count` default 1 | Move item entre containers. |
