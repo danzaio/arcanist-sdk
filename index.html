@@ -522,11 +522,14 @@ footer {
         <div class="sig">
           <code>E.localplayer()</code><span class="ret">tabela · nil, err</span>
           <span class="desc">id, name, x, y, z, hp, hp_max, hp_pct, mana, mana_max, mana_pct, cap, dir,
-          level, xp, stamina, alive, poisoned, paralyzed, hasted, manashielded, <strong>in_pz</strong>, drunk</span>
+          level, xp, stamina, alive, poisoned, paralyzed, hasted, manashielded, <strong>in_pz</strong>, drunk,
+          burning, electrified, battlesign, drowning, freezing, dazzled, cursed, strengthened,
+          redbattlesign, bleeding</span>
         </div>
         <div class="sig">
           <code>E.creatures()</code><span class="ret">lista</span>
-          <span class="desc">id, name, x, y, z, dist, hp_pct, is_self, is_player <em>(só outros)</em>, is_monster, is_npc, skull</span>
+          <span class="desc">id, name, x, y, z, dist, hp_pct, is_self, is_player <em>(só outros)</em>, is_monster, is_npc, skull,
+          dir (0=N,1=E,2=S,3=W), look (outfit), level, party</span>
         </div>
         <div class="sig">
           <code>E.creature(id)</code><span class="ret">tabela · nil</span>
@@ -541,7 +544,11 @@ footer {
           <span class="desc">Itens <strong>equipados</strong> por slot (só os ocupados): <code>helmet</code>,
           <code>amulet</code>, <code>backpack</code>, <code>armor</code>, <code>right</code> (arma),
           <code>left</code> (escudo), <code>legs</code>, <code>boots</code>, <code>ring</code>,
-          <code>ammo</code>. Cada item tem <code>id</code> e <code>count</code> — ex.: <code>eq.helmet.id</code>.</span>
+          <code>ammo</code>. Cada item tem <code>id</code>, <code>count</code> e <code>index</code> (1..10) — ex.: <code>eq.helmet.id</code>.</span>
+        </div>
+        <div class="sig">
+          <code>E.tiles([raio])</code><span class="ret">lista</span>
+          <span class="desc">Scan de sqm ao redor (raio 1..15, default 8): <code>{{x,y,z,items={{id,count}},creatures={ids}}}</code> — só tiles com coisa. <strong>Não chame por frame</strong> (2-5x por segundo).</span>
         </div>
         <div class="sig">
           <code>K.open()</code><span class="ret">lista · nil, err</span>
@@ -579,6 +586,11 @@ footer {
         <div class="sig"><code>L.step(dir)</code><span class="ret">ok, err</span>
           <span class="desc">Passo em direção explícita: 0=N 1=E 2=S 3=W 4=NE 5=SE 6=SW 7=NW.</span></div>
         <div class="sig"><code>L.say(texto)</code><span class="ret">ok, err</span><span class="desc">Fala no chat.</span></div>
+        <div class="sig"><code>L.whisper(texto)</code><span class="ret">ok, err</span><span class="desc">Sussurro (só quem tá colado ouve).</span></div>
+        <div class="sig"><code>L.yell(texto)</code><span class="ret">ok, err</span><span class="desc">Grito (a tela inteira ouve).</span></div>
+        <div class="sig"><code>L.npc(texto)</code><span class="ret">ok, err</span><span class="desc">Fala no diálogo do NPC (abre com <code>L.say("hi")</code> antes).</span></div>
+        <div class="sig"><code>L.channel(id, texto)</code><span class="ret">ok, err</span><span class="desc">Fala num canal aberto (party, guild...).</span></div>
+        <div class="sig"><code>L.pm(nome, texto)</code><span class="ret">ok, err</span><span class="desc">Privada pra um jogador.</span></div>
         <div class="sig"><code>L.stop()</code><span class="ret">ok, err</span><span class="desc">Cancela o andar.</span></div>
       </div>
 
@@ -586,12 +598,36 @@ footer {
       <div class="api">
         <div class="sig"><code>L.attack(creature_id)</code><span class="ret">ok, err</span>
           <span class="desc">Ataca a criatura. <code>0</code> cancela o ataque atual.</span></div>
+        <div class="sig"><code>L.fight_modes(fight, chase, safe)</code><span class="ret">ok, err</span>
+          <span class="desc">1=offensive 2=balanced 3=defensive · chase 0=parado 1=seguindo · safe 0/1.</span></div>
+      </div>
+
+      <h3>Olho — <code>sdk.localplayer</code></h3>
+      <div class="api">
+        <div class="sig"><code>L.look(x, y, z)</code><span class="ret">ok, err</span>
+          <span class="desc">Olha o objeto de cima do tile (vem o "You see..." no chat).</span></div>
+        <div class="sig"><code>L.turn(dir)</code><span class="ret">ok, err</span>
+          <span class="desc">Vira sem andar: 0=N 1=E 2=S 3=W.</span></div>
+        <div class="sig"><code>L.browse(x, y, z)</code><span class="ret">ok, err</span>
+          <span class="desc">Pede os dados do tile pro servidor.</span></div>
       </div>
 
       <h3>Itens — <code>sdk.localplayer</code> / <code>sdk.tools</code> / <code>sdk.stash</code></h3>
       <div class="api">
-        <div class="sig"><code>L.use_item(cid, slot, item_id)</code><span class="ret">ok, err</span></div>
-        <div class="sig"><code>L.use_at(x, y, z, item_id)</code><span class="ret">ok, err</span></div>
+        <div class="sig"><code>L.use_item(cid, slot, item_id)</code><span class="ret">ok, err</span>
+          <span class="desc">Usa item de container aberto (<code>cid 0</code> = primeira janela).</span></div>
+        <div class="sig"><code>L.use_at(x, y, z, item_id)</code><span class="ret">ok, err</span>
+          <span class="desc">Usa item no tile. No corpo: <code>(65535, slot, 0)</code>.</span></div>
+        <div class="sig"><code>L.use_ground(x, y, z[, n])</code><span class="ret">ok, err</span>
+          <span class="desc">Usa o n-ésimo item (<code>n</code> default 1; 0=chão, 1=escada em geral).</span></div>
+        <div class="sig"><code>L.use_tool(item_id)</code><span class="ret">ok, err</span>
+          <span class="desc">Hotkey (corda, pá...). Vale com a bp fechada.</span></div>
+        <div class="sig"><code>L.use_on(item_id, x, y, z)</code><span class="ret">ok, err</span>
+          <span class="desc">Com mira no objeto (chave na porta, corda no buraco).</span></div>
+        <div class="sig"><code>L.use_on_creature(x, y, z, item_id, stackpos, creature_id)</code><span class="ret">ok, err</span>
+          <span class="desc">Usa item EM criatura (runa no monstro). Id sai do <code>E.creatures()</code>.</span></div>
+        <div class="sig"><code>L.rotate(x, y, z, item_id)</code><span class="ret">ok, err</span>
+          <span class="desc">Gira o item (porta, cama...).</span></div>
         <div class="sig"><code>L.move_item(from_cid, from_slot, to_cid, to_slot, item_id[, count])</code><span class="ret">ok, err</span></div>
         <div class="sig"><code>L.close_all()</code><span class="ret">ok, err</span><span class="desc">Fecha todos os containers.</span></div>
         <div class="sig"><code>T.quickloot()</code><span class="ret">ok, err</span><span class="desc">Loot do chão ao redor.</span></div>
@@ -599,10 +635,22 @@ footer {
         <div class="sig"><code>S.withdraw(item_id, count)</code><span class="ret">ok, err</span><span class="desc">Saca do stash.</span></div>
       </div>
 
+      <h3>Containers — <code>sdk.containers</code></h3>
+      <div class="api">
+        <div class="sig"><code>K.open() · K.list()</code><span class="ret">lista · nil, err</span>
+          <span class="desc">Containers abertos com os itens (<code>list</code> é apelido).</span></div>
+        <div class="sig"><code>K.close(cid)</code><span class="ret">ok, err</span><span class="desc">Fecha um container.</span></div>
+        <div class="sig"><code>K.up(cid)</code><span class="ret">ok, err</span><span class="desc">Sobe um nível (bp interna → pai).</span></div>
+      </div>
+
       <h3>NPC / cavebot — <code>sdk.npc</code> / <code>sdk.cavebot</code></h3>
       <div class="api">
         <div class="sig"><code>Np.buy(item_id[, count[, ignore_cap[, in_backpack]]])</code><span class="ret">ok, err</span></div>
         <div class="sig"><code>Np.sell(item_id[, count])</code><span class="ret">ok, err</span></div>
+        <div class="sig"><code>N.trade_open()</code><span class="ret">bool</span>
+          <span class="desc"><code>true</code> se o trade do NPC está aberto (abre com <code>L.say("hi")</code> + <code>L.say("trade")</code>).</span></div>
+        <div class="sig"><code>N.offers()</code><span class="ret">lista</span>
+          <span class="desc"><code>{id, count, name, buy, sell}</code> — falha se o trade estiver fechado.</span></div>
         <div class="sig"><code>B.start() · B.stop() · B.set(chave, valor)</code><span class="ret">ok, err</span></div>
         <div class="sig"><code>B.route_load(path) · B.route_save(path) · B.route_clear()</code><span class="ret">ok, err</span></div>
       </div>
@@ -1308,7 +1356,7 @@ end</code></pre></div>
           <h4>Funcionando</h4>
           <ul style="margin:0; padding-left:1.1em; color:var(--text-soft)">
             <li>Leitura completa do personagem e criaturas</li>
-            <li>~35 ações (andar, atacar, itens, NPC, stash)</li>
+            <li>~50 ações (andar, falar, lutar, olhar, itens, NPC, stash)</li>
             <li>Pathfinding do cliente (<code>N.go</code>)</li>
             <li>49 campos do RTC (list/get/set)</li>
             <li>5 eventos tipados</li>
@@ -1322,6 +1370,8 @@ end</code></pre></div>
             <li>Teclas e hotkeys <strong>globais</strong> (<code>game.key</code> — funciona com o jogo em foco)</li>
             <li>Inventário equipado ao vivo (<code>E.equipment()</code>)</li>
             <li>Containers abertos (<code>K.open()</code>)</li>
+            <li>Scan de sqm ao redor (<code>E.tiles()</code>)</li>
+            <li>Diálogo com NPC (<code>L.npc()</code>) + trade (<code>N.offers()</code>)</li>
             <li>Watchdog de laço infinito + validação de argumentos</li>
           </ul>
         </div>
@@ -1330,7 +1380,7 @@ end</code></pre></div>
           <ul style="margin:0; padding-left:1.1em; color:var(--text-soft)">
             <li>Evento de chat (<code>Talk</code>)</li>
             <li>Mexer na UI do jogo (ex.: botão trade do NPC)</li>
-            <li>Scan de todos os SQM (<code>M.scan</code>)</li>
+            <li>Paginação de container grande (<code>K.seek</code>)</li>
           </ul>
           <p class="hint">Nada disso bloqueia escrever feature: são próximos passos.</p>
         </div>
