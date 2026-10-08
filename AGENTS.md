@@ -194,6 +194,7 @@ local E = require("sdk.engine")
 | `E.target()` | inteiro | id do alvo atual; `0` = sem alvo |
 | `E.equipment()` | tabela | itens **equipados**, por slot — só os slots ocupados: `{helmet={slot="helmet",index=1,id=1234,count=1}, backpack={...}, ...}` |
 | `E.tiles([raio])` | lista | scan de sqm ao redor do player (raio 1..15, default 8): `{{x,y,z,items={{id,count}},creatures={ids}}}` — só tiles com coisa; **não chame por frame** (no máximo 2-5x por segundo) |
+| `E.chat([n])` | lista ou `nil, err` | últimas `n` mensagens (default 20, máx 50, mais antiga primeiro): `{{author, text, mode, channel_id, channel, time}}` — `mode`: 1 say, 2 whisper, 3 yell, 4 pm-out, 5/11 pm-in; `time` = epoch s |
 
 Slots do equipamento: `helmet`, `amulet`, `backpack`, `armor`, `right` (arma), `left` (escudo),
 `legs`, `boots`, `ring`, `ammo`. Slot vazio = ausente na tabela. Cada entrada tem `index`
@@ -310,6 +311,7 @@ K.list()                -- apelido do open() (mesma coisa)
 K.close(cid)            -- fecha UM container
 K.up(cid)               -- sobe um nivel (bp interna -> pai)
 K.seek(cid, index)      -- pagina do container a partir de index (container grande)
+K.open_backpacks()      -- fecha tudo, abre a equipada + as de dentro 1x1; devolve os cids
 
 -- Lista os containers ABERTOS (mochila, bp's abertas, depot) com os itens:
 local cs, err = K.open()
@@ -326,7 +328,11 @@ end
 ```
 
 `K.open()` devolve `lista` ou `nil, err` (fail-closed: sem jogo devolve erro). Cada container:
-`{id, name, capacity, items = {{slot, id, count}, ...}}`.
+`{id, name, capacity, items = {{slot, id, count, is_container}, ...}}` (`is_container` = é mochila aninhada).
+
+```lua
+local opened = K.open_backpacks() -- fecha tudo e abre a equipada + as de dentro
+```
 
 ```lua
 K.close(cid)  -- fecha UM container (0x87)
