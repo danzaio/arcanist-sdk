@@ -222,6 +222,8 @@ local L = require("sdk.localplayer")
 | `L.walk(x, y, z)` | tile | Anda 1 passo na direção do tile (síncrono). |
 | `L.step(dir)` | 0..7 | Um passo em direção explícita: **0=N, 1=E, 2=S, 3=W, 4=NE, 5=SE, 6=SW, 7=NW** (mesma convenção do ElfBot/rxbot). |
 | `L.say(texto)` | string | Fala no chat (ex: `"exura"`). |
+| `L.whisper(texto)` | string | Sussurro (modo 2, só quem tá colado ouve). |
+| `L.yell(texto)` | string | Grito (modo 3, a tela inteira ouve). |
 | `L.stop()` | — | Cancela o andar. |
 | `L.attack(id)` | creature id | Ataca; `0` cancela o ataque. |
 | `L.use_item(cid, slot, item_id)` | — | Usa item de um container ABERTO (`cid` 0 = primeira janela; os cids vêm do `K.open()`). |
