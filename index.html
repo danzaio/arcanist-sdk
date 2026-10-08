@@ -598,6 +598,8 @@ footer {
       <div class="api">
         <div class="sig"><code>L.attack(creature_id)</code><span class="ret">ok, err</span>
           <span class="desc">Ataca a criatura. <code>0</code> cancela o ataque atual.</span></div>
+        <div class="sig"><code>L.follow(creature_id)</code><span class="ret">ok, err</span>
+          <span class="desc">Segue a criatura.</span></div>
         <div class="sig"><code>L.fight_modes(fight, chase, safe)</code><span class="ret">ok, err</span>
           <span class="desc">1=offensive 2=balanced 3=defensive · chase 0=parado 1=seguindo · safe 0/1.</span></div>
       </div>
@@ -641,6 +643,7 @@ footer {
           <span class="desc">Containers abertos com os itens (<code>list</code> é apelido).</span></div>
         <div class="sig"><code>K.close(cid)</code><span class="ret">ok, err</span><span class="desc">Fecha um container.</span></div>
         <div class="sig"><code>K.up(cid)</code><span class="ret">ok, err</span><span class="desc">Sobe um nível (bp interna → pai).</span></div>
+        <div class="sig"><code>K.seek(cid, index)</code><span class="ret">ok, err</span><span class="desc">Pagina do container a partir de index.</span></div>
       </div>
 
       <h3>NPC / cavebot — <code>sdk.npc</code> / <code>sdk.cavebot</code></h3>
