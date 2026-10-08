@@ -224,6 +224,7 @@ local L = require("sdk.localplayer")
 | `L.say(texto)` | string | Fala no chat (ex: `"exura"`). |
 | `L.whisper(texto)` | string | Sussurro (modo 2, só quem tá colado ouve). |
 | `L.yell(texto)` | string | Grito (modo 3, a tela inteira ouve). |
+| `L.npc(texto)` | string | Fala no diálogo do NPC (modo 11; abre com `say "hi"` antes). |
 | `L.channel(id, texto)` | id 0..65535 | Fala num canal aberto (party, guild...). |
 | `L.pm(nome, texto)` | nome 1..31 letras | Mensagem privada pra um jogador. |
 | `L.stop()` | — | Cancela o andar. |
