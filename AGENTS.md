@@ -188,8 +188,8 @@ local E = require("sdk.engine")
 
 | Função | Retorno | Campos |
 |---|---|---|
-| `E.localplayer()` | tabela ou `nil, err` | `id, name, x, y, z, hp, hp_max, mana, mana_max, cap, hp_pct, mana_pct, dir, level, xp, stamina, alive, poisoned, paralyzed, hasted, manashielded, in_pz, drunk` |
-| `E.creatures()` | lista (array) | itens com `id, name, x, y, z, dist, hp_pct, is_player, is_monster, is_npc, is_self, skull` |
+| `E.localplayer()` | tabela ou `nil, err` | `id, name, x, y, z, hp, hp_max, mana, mana_max, cap, hp_pct, mana_pct, dir, level, xp, stamina, alive, poisoned, paralyzed, hasted, manashielded, in_pz, drunk, burning, electrified, battlesign, drowning, freezing, dazzled, cursed, strengthened, redbattlesign, bleeding` |
+| `E.creatures()` | lista (array) | itens com `id, name, x, y, z, dist, hp_pct, is_player, is_monster, is_npc, is_self, skull, dir (0=N,1=E,2=S,3=W), look (outfit), level, party` |
 | `E.creature(id)` | tabela ou `nil` | procura o `id` na lista acima |
 | `E.target()` | inteiro | id do alvo atual; `0` = sem alvo |
 | `E.equipment()` | tabela | itens **equipados**, por slot — só os slots ocupados: `{helmet={slot="helmet",index=1,id=1234,count=1}, backpack={...}, ...}` |
@@ -398,7 +398,7 @@ com os campos + `ev.name`.
 | `"Mana"` | `pct, mana, mana_max` |
 | `"PositionChange"` | `x, y, z` |
 | `"Level"` | `level, xp` |
-| `"Conditions"` | `poisoned, paralyzed, hasted, manashielded, in_pz, drunk, alive` |
+| `"Conditions"` | `poisoned, paralyzed, hasted, manashielded, in_pz, drunk, alive, burning, electrified, battlesign, drowning, freezing, dazzled, cursed, strengthened, redbattlesign, bleeding` |
 
 ### 4.15 `game.overlay` — a UI (só no estado `ui`)
 
