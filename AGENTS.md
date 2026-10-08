@@ -192,11 +192,12 @@ local E = require("sdk.engine")
 | `E.creatures()` | lista (array) | itens com `id, name, x, y, z, dist, hp_pct, is_player, is_monster, is_npc, is_self, skull` |
 | `E.creature(id)` | tabela ou `nil` | procura o `id` na lista acima |
 | `E.target()` | inteiro | id do alvo atual; `0` = sem alvo |
-| `E.equipment()` | tabela | itens **equipados**, por slot — só os slots ocupados: `{helmet={slot="helmet",id=1234,count=1}, backpack={...}, ...}` |
+| `E.equipment()` | tabela | itens **equipados**, por slot — só os slots ocupados: `{helmet={slot="helmet",index=1,id=1234,count=1}, backpack={...}, ...}` |
 | `E.tiles([raio])` | lista | scan de sqm ao redor do player (raio 1..15, default 8): `{{x,y,z,items={{id,count}},creatures={ids}}}` — só tiles com coisa; **não chame por frame** (no máximo 2-5x por segundo) |
 
 Slots do equipamento: `helmet`, `amulet`, `backpack`, `armor`, `right` (arma), `left` (escudo),
-`legs`, `boots`, `ring`, `ammo`. Slot vazio = ausente na tabela.
+`legs`, `boots`, `ring`, `ammo`. Slot vazio = ausente na tabela. Cada entrada tem `index`
+(1..10, padrão OTClient) — pra abrir/usar o equipado: `L.use_at(65535, index, 0, id)`.
 
 ```lua
 local eq = E.equipment()
@@ -223,8 +224,9 @@ local L = require("sdk.localplayer")
 | `L.say(texto)` | string | Fala no chat (ex: `"exura"`). |
 | `L.stop()` | — | Cancela o andar. |
 | `L.attack(id)` | creature id | Ataca; `0` cancela o ataque. |
-| `L.use_item(cid, slot, item_id)` | — | Usa item de um container (`cid` 0 = inventário). |
-| `L.use_at(x, y, z, item_id)` | — | Usa item num tile. |
+| `L.use_item(cid, slot, item_id)` | — | Usa item de um container ABERTO (`cid` 0 = primeira janela; os cids vêm do `K.open()`). |
+| `L.use_at(x, y, z, item_id)` | — | Usa item num tile. No CORPO: `(65535, slot, 0)` — ex: mochila equipada = `L.use_at(65535, 3, 0, id)`. |
+| `L.use_ground(x, y, z)` | — | Usa o item DE CIMA do tile sem saber o id (pra waypoint com campo vazio). |
 | `L.move_item(from_cid, from_slot, to_cid, to_slot, item_id[, count])` | `count` default 1 | Move item entre containers. |
 | `L.close_all()` | — | Fecha todas as janelas. |
 
@@ -290,6 +292,8 @@ C.route_load(path) / C.route_save(path) / C.route_clear()
 ```lua
 local K = require("sdk.containers")
 K.count_item(item_id)   -- quantos desse item você tem (inventário + abertos)
+K.open()                -- containers ABERTOS (mochila, bps abertas, depot) com os itens
+K.list()                -- apelido do open() (mesma coisa)
 
 -- Lista os containers ABERTOS (mochila, bp's abertas, depot) com os itens:
 local cs, err = K.open()
@@ -480,6 +484,20 @@ ui.columns(1)
 ui.button("esquerda")
 ui.same_line(200)
 ui.button("direita")
+```
+
+**Receita: duas caixas lado a lado** (waypoints na esquerda, botões na direita):
+
+```lua
+ui.begin_child("box_esq", 300, 220, true)
+ui.text("waypoints")
+-- ... lista/botoes da esquerda ...
+ui.end_child()
+ui.same_line()
+ui.begin_child("box_dir", 300, 220, true)
+ui.text("botoes")
+-- ... botoes da direita ...
+ui.end_child()
 ```
 
 Pack de exemplo rodando: `scripts/demo_dpad/`.
