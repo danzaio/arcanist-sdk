@@ -193,6 +193,7 @@ local E = require("sdk.engine")
 | `E.creature(id)` | tabela ou `nil` | procura o `id` na lista acima |
 | `E.target()` | inteiro | id do alvo atual; `0` = sem alvo |
 | `E.equipment()` | tabela | itens **equipados**, por slot — só os slots ocupados: `{helmet={slot="helmet",id=1234,count=1}, backpack={...}, ...}` |
+| `E.tiles([raio])` | lista | scan de sqm ao redor do player (raio 1..15, default 8): `{{x,y,z,items={{id,count}},creatures={ids}}}` — só tiles com coisa; **não chame por frame** (no máximo 2-5x por segundo) |
 
 Slots do equipamento: `helmet`, `amulet`, `backpack`, `armor`, `right` (arma), `left` (escudo),
 `legs`, `boots`, `ring`, `ammo`. Slot vazio = ausente na tabela.
@@ -250,12 +251,14 @@ ST.stow(cid)             -- esvazia o container aberto no stash de UMA vez (SEM 
 ST.withdraw(item_id, count)  -- saca item do stash
 ```
 
-### 4.7 `sdk.npc` — comprar / vender
+### 4.7 `sdk.npc` — comprar / vender / trade
 
 ```lua
 local N = require("sdk.npc")
 N.buy(item_id[, count[, ignore_cap[, in_backpack]]])  -- count=1, ignore_cap=false, in_backpack=false
 N.sell(item_id[, count])                              -- count=1
+N.trade_open()  -- true se o trade do NPC está ABERTO (abre com L.say("hi") + L.say("trade"))
+N.offers()      -- lista de {id, count, name, buy, sell} — falha se o trade estiver fechado
 ```
 
 ### 4.8 `sdk.helper` — o RTC (auto-target, auto-cast, cura...)
